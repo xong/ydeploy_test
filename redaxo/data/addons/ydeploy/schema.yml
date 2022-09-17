@@ -1,0 +1,452 @@
+tables:
+    rex_action:
+        charset: utf8mb4
+        collation: utf8mb4_unicode_ci
+        columns:
+            id: { type: 'int(10) unsigned', nullable: false, default: null, extra: auto_increment }
+            name: { type: varchar(255), nullable: false, default: null, extra: null }
+            preview: { type: text, nullable: true, default: null, extra: null }
+            presave: { type: text, nullable: true, default: null, extra: null }
+            postsave: { type: text, nullable: true, default: null, extra: null }
+            previewmode: { type: tinyint(4), nullable: true, default: null, extra: null }
+            presavemode: { type: tinyint(4), nullable: true, default: null, extra: null }
+            postsavemode: { type: tinyint(4), nullable: true, default: null, extra: null }
+            createdate: { type: datetime, nullable: false, default: null, extra: null }
+            createuser: { type: varchar(255), nullable: false, default: null, extra: null }
+            updatedate: { type: datetime, nullable: false, default: null, extra: null }
+            updateuser: { type: varchar(255), nullable: false, default: null, extra: null }
+            revision: { type: 'int(10) unsigned', nullable: false, default: null, extra: null }
+        primaryKey:
+            - id
+    rex_article:
+        charset: utf8mb4
+        collation: utf8mb4_unicode_ci
+        columns:
+            pid: { type: 'int(10) unsigned', nullable: false, default: null, extra: auto_increment }
+            id: { type: 'int(10) unsigned', nullable: false, default: null, extra: null }
+            parent_id: { type: 'int(10) unsigned', nullable: false, default: null, extra: null }
+            name: { type: varchar(255), nullable: false, default: null, extra: null }
+            catname: { type: varchar(255), nullable: false, default: null, extra: null }
+            catpriority: { type: 'int(10) unsigned', nullable: false, default: null, extra: null }
+            startarticle: { type: tinyint(1), nullable: false, default: null, extra: null }
+            priority: { type: 'int(10) unsigned', nullable: false, default: null, extra: null }
+            path: { type: varchar(255), nullable: false, default: null, extra: null }
+            status: { type: tinyint(1), nullable: false, default: null, extra: null }
+            template_id: { type: 'int(10) unsigned', nullable: false, default: null, extra: null }
+            clang_id: { type: 'int(10) unsigned', nullable: false, default: null, extra: null }
+            createdate: { type: datetime, nullable: false, default: null, extra: null }
+            createuser: { type: varchar(255), nullable: false, default: null, extra: null }
+            updatedate: { type: datetime, nullable: false, default: null, extra: null }
+            updateuser: { type: varchar(255), nullable: false, default: null, extra: null }
+            revision: { type: 'int(10) unsigned', nullable: false, default: null, extra: null }
+        primaryKey:
+            - pid
+        indexes:
+            find_articles: { type: UNIQUE, columns: [id, clang_id] }
+            id: { type: INDEX, columns: [id] }
+            clang_id: { type: INDEX, columns: [clang_id] }
+            parent_id: { type: INDEX, columns: [parent_id] }
+    rex_article_slice:
+        charset: utf8mb4
+        collation: utf8mb4_unicode_ci
+        columns:
+            id: { type: 'int(10) unsigned', nullable: false, default: null, extra: auto_increment }
+            article_id: { type: 'int(10) unsigned', nullable: false, default: null, extra: null }
+            clang_id: { type: 'int(10) unsigned', nullable: false, default: null, extra: null }
+            ctype_id: { type: 'int(10) unsigned', nullable: false, default: null, extra: null }
+            module_id: { type: 'int(10) unsigned', nullable: false, default: null, extra: null }
+            revision: { type: int(11), nullable: false, default: null, extra: null }
+            priority: { type: 'int(10) unsigned', nullable: false, default: null, extra: null }
+            status: { type: tinyint(1), nullable: false, default: '1', extra: null }
+            value1: { type: mediumtext, nullable: true, default: null, extra: null }
+            value2: { type: mediumtext, nullable: true, default: null, extra: null }
+            value3: { type: mediumtext, nullable: true, default: null, extra: null }
+            value4: { type: mediumtext, nullable: true, default: null, extra: null }
+            value5: { type: mediumtext, nullable: true, default: null, extra: null }
+            value6: { type: mediumtext, nullable: true, default: null, extra: null }
+            value7: { type: mediumtext, nullable: true, default: null, extra: null }
+            value8: { type: mediumtext, nullable: true, default: null, extra: null }
+            value9: { type: mediumtext, nullable: true, default: null, extra: null }
+            value10: { type: mediumtext, nullable: true, default: null, extra: null }
+            value11: { type: mediumtext, nullable: true, default: null, extra: null }
+            value12: { type: mediumtext, nullable: true, default: null, extra: null }
+            value13: { type: mediumtext, nullable: true, default: null, extra: null }
+            value14: { type: mediumtext, nullable: true, default: null, extra: null }
+            value15: { type: mediumtext, nullable: true, default: null, extra: null }
+            value16: { type: mediumtext, nullable: true, default: null, extra: null }
+            value17: { type: mediumtext, nullable: true, default: null, extra: null }
+            value18: { type: mediumtext, nullable: true, default: null, extra: null }
+            value19: { type: mediumtext, nullable: true, default: null, extra: null }
+            value20: { type: mediumtext, nullable: true, default: null, extra: null }
+            media1: { type: varchar(255), nullable: true, default: null, extra: null }
+            media2: { type: varchar(255), nullable: true, default: null, extra: null }
+            media3: { type: varchar(255), nullable: true, default: null, extra: null }
+            media4: { type: varchar(255), nullable: true, default: null, extra: null }
+            media5: { type: varchar(255), nullable: true, default: null, extra: null }
+            media6: { type: varchar(255), nullable: true, default: null, extra: null }
+            media7: { type: varchar(255), nullable: true, default: null, extra: null }
+            media8: { type: varchar(255), nullable: true, default: null, extra: null }
+            media9: { type: varchar(255), nullable: true, default: null, extra: null }
+            media10: { type: varchar(255), nullable: true, default: null, extra: null }
+            medialist1: { type: text, nullable: true, default: null, extra: null }
+            medialist2: { type: text, nullable: true, default: null, extra: null }
+            medialist3: { type: text, nullable: true, default: null, extra: null }
+            medialist4: { type: text, nullable: true, default: null, extra: null }
+            medialist5: { type: text, nullable: true, default: null, extra: null }
+            medialist6: { type: text, nullable: true, default: null, extra: null }
+            medialist7: { type: text, nullable: true, default: null, extra: null }
+            medialist8: { type: text, nullable: true, default: null, extra: null }
+            medialist9: { type: text, nullable: true, default: null, extra: null }
+            medialist10: { type: text, nullable: true, default: null, extra: null }
+            link1: { type: varchar(10), nullable: true, default: null, extra: null }
+            link2: { type: varchar(10), nullable: true, default: null, extra: null }
+            link3: { type: varchar(10), nullable: true, default: null, extra: null }
+            link4: { type: varchar(10), nullable: true, default: null, extra: null }
+            link5: { type: varchar(10), nullable: true, default: null, extra: null }
+            link6: { type: varchar(10), nullable: true, default: null, extra: null }
+            link7: { type: varchar(10), nullable: true, default: null, extra: null }
+            link8: { type: varchar(10), nullable: true, default: null, extra: null }
+            link9: { type: varchar(10), nullable: true, default: null, extra: null }
+            link10: { type: varchar(10), nullable: true, default: null, extra: null }
+            linklist1: { type: text, nullable: true, default: null, extra: null }
+            linklist2: { type: text, nullable: true, default: null, extra: null }
+            linklist3: { type: text, nullable: true, default: null, extra: null }
+            linklist4: { type: text, nullable: true, default: null, extra: null }
+            linklist5: { type: text, nullable: true, default: null, extra: null }
+            linklist6: { type: text, nullable: true, default: null, extra: null }
+            linklist7: { type: text, nullable: true, default: null, extra: null }
+            linklist8: { type: text, nullable: true, default: null, extra: null }
+            linklist9: { type: text, nullable: true, default: null, extra: null }
+            linklist10: { type: text, nullable: true, default: null, extra: null }
+            createdate: { type: datetime, nullable: false, default: null, extra: null }
+            createuser: { type: varchar(255), nullable: false, default: null, extra: null }
+            updatedate: { type: datetime, nullable: false, default: null, extra: null }
+            updateuser: { type: varchar(255), nullable: false, default: null, extra: null }
+        primaryKey:
+            - id
+        indexes:
+            slice_priority: { type: INDEX, columns: [article_id, priority, module_id] }
+            clang_id: { type: INDEX, columns: [clang_id] }
+            article_id: { type: INDEX, columns: [article_id] }
+            find_slices: { type: INDEX, columns: [clang_id, article_id] }
+    rex_clang:
+        charset: utf8mb4
+        collation: utf8mb4_unicode_ci
+        columns:
+            id: { type: 'int(10) unsigned', nullable: false, default: null, extra: auto_increment }
+            code: { type: varchar(255), nullable: false, default: null, extra: null }
+            name: { type: varchar(255), nullable: false, default: null, extra: null }
+            priority: { type: 'int(10) unsigned', nullable: false, default: null, extra: null }
+            status: { type: tinyint(1), nullable: false, default: null, extra: null }
+            revision: { type: 'int(10) unsigned', nullable: false, default: null, extra: null }
+        primaryKey:
+            - id
+    rex_config:
+        charset: utf8mb4
+        collation: utf8mb4_unicode_ci
+        columns:
+            namespace: { type: varchar(75), nullable: false, default: null, extra: null }
+            key: { type: varchar(255), nullable: false, default: null, extra: null }
+            value: { type: text, nullable: false, default: null, extra: null }
+        primaryKey:
+            - namespace
+            - key
+    rex_media:
+        charset: utf8mb4
+        collation: utf8mb4_unicode_ci
+        columns:
+            id: { type: 'int(10) unsigned', nullable: false, default: null, extra: auto_increment }
+            category_id: { type: 'int(10) unsigned', nullable: false, default: null, extra: null }
+            attributes: { type: text, nullable: true, default: null, extra: null }
+            filetype: { type: varchar(255), nullable: true, default: null, extra: null }
+            filename: { type: varchar(255), nullable: true, default: null, extra: null }
+            originalname: { type: varchar(255), nullable: true, default: null, extra: null }
+            filesize: { type: varchar(255), nullable: true, default: null, extra: null }
+            width: { type: 'int(10) unsigned', nullable: true, default: null, extra: null }
+            height: { type: 'int(10) unsigned', nullable: true, default: null, extra: null }
+            title: { type: varchar(255), nullable: true, default: null, extra: null }
+            createdate: { type: datetime, nullable: false, default: null, extra: null }
+            createuser: { type: varchar(255), nullable: false, default: null, extra: null }
+            updatedate: { type: datetime, nullable: false, default: null, extra: null }
+            updateuser: { type: varchar(255), nullable: false, default: null, extra: null }
+            revision: { type: 'int(10) unsigned', nullable: false, default: null, extra: null }
+        primaryKey:
+            - id
+        indexes:
+            filename: { type: UNIQUE, columns: [filename] }
+            category_id: { type: INDEX, columns: [category_id] }
+    rex_media_category:
+        charset: utf8mb4
+        collation: utf8mb4_unicode_ci
+        columns:
+            id: { type: 'int(10) unsigned', nullable: false, default: null, extra: auto_increment }
+            name: { type: varchar(255), nullable: false, default: null, extra: null }
+            parent_id: { type: 'int(10) unsigned', nullable: false, default: null, extra: null }
+            path: { type: varchar(255), nullable: false, default: null, extra: null }
+            createdate: { type: datetime, nullable: false, default: null, extra: null }
+            createuser: { type: varchar(255), nullable: false, default: null, extra: null }
+            updatedate: { type: datetime, nullable: false, default: null, extra: null }
+            updateuser: { type: varchar(255), nullable: false, default: null, extra: null }
+            attributes: { type: text, nullable: true, default: null, extra: null }
+            revision: { type: 'int(10) unsigned', nullable: false, default: null, extra: null }
+        primaryKey:
+            - id
+        indexes:
+            parent_id: { type: INDEX, columns: [parent_id] }
+    rex_media_manager_type:
+        charset: utf8mb4
+        collation: utf8mb4_unicode_ci
+        columns:
+            id: { type: 'int(10) unsigned', nullable: false, default: null, extra: auto_increment }
+            status: { type: 'int(10) unsigned', nullable: false, default: null, extra: null }
+            name: { type: varchar(255), nullable: false, default: null, extra: null }
+            description: { type: varchar(255), nullable: false, default: null, extra: null }
+            createdate: { type: datetime, nullable: false, default: null, extra: null }
+            createuser: { type: varchar(255), nullable: false, default: null, extra: null }
+            updatedate: { type: datetime, nullable: false, default: null, extra: null }
+            updateuser: { type: varchar(255), nullable: false, default: null, extra: null }
+        primaryKey:
+            - id
+        indexes:
+            name: { type: UNIQUE, columns: [name] }
+    rex_media_manager_type_effect:
+        charset: utf8mb4
+        collation: utf8mb4_unicode_ci
+        columns:
+            id: { type: 'int(10) unsigned', nullable: false, default: null, extra: auto_increment }
+            type_id: { type: 'int(10) unsigned', nullable: false, default: null, extra: null }
+            effect: { type: varchar(255), nullable: false, default: null, extra: null }
+            parameters: { type: text, nullable: false, default: null, extra: null }
+            priority: { type: 'int(10) unsigned', nullable: false, default: null, extra: null }
+            createdate: { type: datetime, nullable: false, default: null, extra: null }
+            createuser: { type: varchar(255), nullable: false, default: null, extra: null }
+            updatedate: { type: datetime, nullable: false, default: null, extra: null }
+            updateuser: { type: varchar(255), nullable: false, default: null, extra: null }
+        primaryKey:
+            - id
+    rex_metainfo_field:
+        charset: utf8mb4
+        collation: utf8mb4_unicode_ci
+        columns:
+            id: { type: 'int(10) unsigned', nullable: false, default: null, extra: auto_increment }
+            title: { type: varchar(255), nullable: true, default: null, extra: null }
+            name: { type: varchar(255), nullable: true, default: null, extra: null }
+            priority: { type: 'int(10) unsigned', nullable: false, default: null, extra: null }
+            attributes: { type: text, nullable: false, default: null, extra: null }
+            type_id: { type: 'int(10) unsigned', nullable: true, default: null, extra: null }
+            default: { type: varchar(255), nullable: false, default: null, extra: null }
+            params: { type: text, nullable: true, default: null, extra: null }
+            validate: { type: text, nullable: true, default: null, extra: null }
+            callback: { type: text, nullable: true, default: null, extra: null }
+            restrictions: { type: text, nullable: true, default: null, extra: null }
+            templates: { type: text, nullable: true, default: null, extra: null }
+            createdate: { type: datetime, nullable: false, default: null, extra: null }
+            createuser: { type: varchar(255), nullable: false, default: null, extra: null }
+            updatedate: { type: datetime, nullable: false, default: null, extra: null }
+            updateuser: { type: varchar(255), nullable: false, default: null, extra: null }
+        primaryKey:
+            - id
+        indexes:
+            name: { type: UNIQUE, columns: [name] }
+    rex_metainfo_type:
+        charset: utf8mb4
+        collation: utf8mb4_unicode_ci
+        columns:
+            id: { type: 'int(10) unsigned', nullable: false, default: null, extra: auto_increment }
+            label: { type: varchar(255), nullable: true, default: null, extra: null }
+            dbtype: { type: varchar(255), nullable: false, default: null, extra: null }
+            dblength: { type: int(11), nullable: false, default: null, extra: null }
+        primaryKey:
+            - id
+    rex_module:
+        charset: utf8mb4
+        collation: utf8mb4_unicode_ci
+        columns:
+            id: { type: 'int(10) unsigned', nullable: false, default: null, extra: auto_increment }
+            key: { type: varchar(191), nullable: true, default: null, extra: null }
+            name: { type: varchar(255), nullable: false, default: null, extra: null }
+            output: { type: mediumtext, nullable: false, default: null, extra: null }
+            input: { type: mediumtext, nullable: false, default: null, extra: null }
+            createdate: { type: datetime, nullable: false, default: null, extra: null }
+            createuser: { type: varchar(255), nullable: false, default: null, extra: null }
+            updatedate: { type: datetime, nullable: false, default: null, extra: null }
+            updateuser: { type: varchar(255), nullable: false, default: null, extra: null }
+            attributes: { type: text, nullable: true, default: null, extra: null }
+            revision: { type: 'int(10) unsigned', nullable: false, default: null, extra: null }
+        primaryKey:
+            - id
+        indexes:
+            key: { type: UNIQUE, columns: [key] }
+    rex_module_action:
+        charset: utf8mb4
+        collation: utf8mb4_unicode_ci
+        columns:
+            id: { type: 'int(10) unsigned', nullable: false, default: null, extra: auto_increment }
+            module_id: { type: 'int(10) unsigned', nullable: false, default: null, extra: null }
+            action_id: { type: 'int(10) unsigned', nullable: false, default: null, extra: null }
+            revision: { type: 'int(10) unsigned', nullable: false, default: null, extra: null }
+        primaryKey:
+            - id
+    rex_template:
+        charset: utf8mb4
+        collation: utf8mb4_unicode_ci
+        columns:
+            id: { type: 'int(10) unsigned', nullable: false, default: null, extra: auto_increment }
+            key: { type: varchar(191), nullable: true, default: null, extra: null }
+            name: { type: varchar(255), nullable: true, default: null, extra: null }
+            content: { type: mediumtext, nullable: true, default: null, extra: null }
+            active: { type: tinyint(1), nullable: true, default: null, extra: null }
+            createdate: { type: datetime, nullable: false, default: null, extra: null }
+            createuser: { type: varchar(255), nullable: false, default: null, extra: null }
+            updatedate: { type: datetime, nullable: false, default: null, extra: null }
+            updateuser: { type: varchar(255), nullable: false, default: null, extra: null }
+            attributes: { type: text, nullable: true, default: null, extra: null }
+            revision: { type: int(11), nullable: false, default: null, extra: null }
+        primaryKey:
+            - id
+        indexes:
+            key: { type: UNIQUE, columns: [key] }
+    rex_user:
+        charset: utf8mb4
+        collation: utf8mb4_unicode_ci
+        columns:
+            id: { type: 'int(10) unsigned', nullable: false, default: null, extra: auto_increment }
+            name: { type: varchar(255), nullable: true, default: null, extra: null }
+            description: { type: text, nullable: true, default: null, extra: null }
+            login: { type: varchar(50), nullable: false, default: null, extra: null }
+            password: { type: varchar(255), nullable: false, default: null, extra: null }
+            email: { type: varchar(255), nullable: true, default: null, extra: null }
+            status: { type: tinyint(1), nullable: false, default: null, extra: null }
+            admin: { type: tinyint(1), nullable: false, default: null, extra: null }
+            language: { type: varchar(255), nullable: false, default: null, extra: null }
+            startpage: { type: varchar(255), nullable: false, default: null, extra: null }
+            role: { type: text, nullable: true, default: null, extra: null }
+            theme: { type: varchar(255), nullable: true, default: null, extra: null }
+            login_tries: { type: tinyint(4), nullable: false, default: '0', extra: null }
+            createdate: { type: datetime, nullable: false, default: null, extra: null }
+            createuser: { type: varchar(255), nullable: false, default: null, extra: null }
+            updatedate: { type: datetime, nullable: false, default: null, extra: null }
+            updateuser: { type: varchar(255), nullable: false, default: null, extra: null }
+            password_changed: { type: datetime, nullable: false, default: null, extra: null }
+            previous_passwords: { type: text, nullable: false, default: null, extra: null }
+            password_change_required: { type: tinyint(1), nullable: false, default: null, extra: null }
+            lasttrydate: { type: datetime, nullable: false, default: null, extra: null }
+            lastlogin: { type: datetime, nullable: true, default: null, extra: null }
+            session_id: { type: varchar(255), nullable: true, default: null, extra: null }
+            cookiekey: { type: varchar(255), nullable: true, default: null, extra: null }
+            revision: { type: 'int(10) unsigned', nullable: false, default: null, extra: null }
+        primaryKey:
+            - id
+        indexes:
+            login: { type: UNIQUE, columns: [login] }
+    rex_user_role:
+        charset: utf8mb4
+        collation: utf8mb4_unicode_ci
+        columns:
+            id: { type: 'int(10) unsigned', nullable: false, default: null, extra: auto_increment }
+            name: { type: varchar(255), nullable: true, default: null, extra: null }
+            description: { type: text, nullable: true, default: null, extra: null }
+            perms: { type: text, nullable: false, default: null, extra: null }
+            createdate: { type: datetime, nullable: false, default: null, extra: null }
+            createuser: { type: varchar(255), nullable: false, default: null, extra: null }
+            updatedate: { type: datetime, nullable: false, default: null, extra: null }
+            updateuser: { type: varchar(255), nullable: false, default: null, extra: null }
+            revision: { type: 'int(10) unsigned', nullable: false, default: null, extra: null }
+        primaryKey:
+            - id
+    rex_ydeploy_migration:
+        charset: utf8mb4
+        collation: utf8mb4_unicode_ci
+        columns:
+            timestamp: { type: varchar(26), nullable: false, default: null, extra: null }
+        primaryKey:
+            - timestamp
+    rex_yform_email_template:
+        charset: utf8mb4
+        collation: utf8mb4_unicode_ci
+        columns:
+            id: { type: 'int(10) unsigned', nullable: false, default: null, extra: auto_increment }
+            name: { type: varchar(191), nullable: false, default: '', extra: null }
+            mail_from: { type: varchar(191), nullable: false, default: '', extra: null }
+            mail_from_name: { type: varchar(191), nullable: false, default: '', extra: null }
+            mail_reply_to: { type: varchar(191), nullable: false, default: '', extra: null }
+            mail_reply_to_name: { type: varchar(191), nullable: false, default: '', extra: null }
+            subject: { type: varchar(191), nullable: false, default: '', extra: null }
+            body: { type: text, nullable: false, default: null, extra: null }
+            body_html: { type: text, nullable: false, default: null, extra: null }
+            attachments: { type: text, nullable: false, default: null, extra: null }
+            updatedate: { type: datetime, nullable: false, default: null, extra: null }
+        primaryKey:
+            - id
+        indexes:
+            name: { type: UNIQUE, columns: [name] }
+    rex_yform_field:
+        charset: utf8mb4
+        collation: utf8mb4_unicode_ci
+        columns:
+            id: { type: 'int(10) unsigned', nullable: false, default: null, extra: auto_increment }
+            table_name: { type: varchar(191), nullable: false, default: null, extra: null }
+            prio: { type: int(11), nullable: false, default: null, extra: null }
+            type_id: { type: varchar(191), nullable: false, default: null, extra: null }
+            type_name: { type: varchar(191), nullable: false, default: null, extra: null }
+            db_type: { type: varchar(191), nullable: false, default: null, extra: null }
+            list_hidden: { type: tinyint(1), nullable: false, default: null, extra: null }
+            search: { type: tinyint(1), nullable: false, default: null, extra: null }
+            name: { type: text, nullable: false, default: null, extra: null }
+            label: { type: text, nullable: false, default: null, extra: null }
+            not_required: { type: text, nullable: false, default: null, extra: null }
+            multiple: { type: text, nullable: false, default: null, extra: null }
+            expanded: { type: text, nullable: false, default: null, extra: null }
+            choices: { type: text, nullable: false, default: null, extra: null }
+            choice_attributes: { type: text, nullable: false, default: null, extra: null }
+        primaryKey:
+            - id
+    rex_yform_history:
+        charset: utf8mb4
+        collation: utf8mb4_unicode_ci
+        columns:
+            id: { type: 'int(10) unsigned', nullable: false, default: null, extra: auto_increment }
+            table_name: { type: varchar(191), nullable: false, default: null, extra: null }
+            dataset_id: { type: int(11), nullable: false, default: null, extra: null }
+            action: { type: varchar(191), nullable: false, default: null, extra: null }
+            user: { type: varchar(191), nullable: false, default: null, extra: null }
+            timestamp: { type: datetime, nullable: false, default: null, extra: null }
+        primaryKey:
+            - id
+        indexes:
+            dataset: { type: INDEX, columns: [table_name, dataset_id] }
+    rex_yform_history_field:
+        charset: utf8mb4
+        collation: utf8mb4_unicode_ci
+        columns:
+            history_id: { type: int(11), nullable: false, default: null, extra: null }
+            field: { type: varchar(191), nullable: false, default: null, extra: null }
+            value: { type: longtext, nullable: false, default: null, extra: null }
+        primaryKey:
+            - history_id
+            - field
+    rex_yform_table:
+        charset: utf8mb4
+        collation: utf8mb4_unicode_ci
+        columns:
+            id: { type: 'int(10) unsigned', nullable: false, default: null, extra: auto_increment }
+            status: { type: tinyint(1), nullable: false, default: null, extra: null }
+            table_name: { type: varchar(191), nullable: false, default: null, extra: null }
+            name: { type: varchar(191), nullable: false, default: null, extra: null }
+            description: { type: text, nullable: false, default: null, extra: null }
+            list_amount: { type: int(11), nullable: false, default: '50', extra: null }
+            list_sortfield: { type: varchar(191), nullable: false, default: id, extra: null }
+            list_sortorder: { type: 'enum(''ASC'',''DESC'')', nullable: false, default: ASC, extra: null }
+            prio: { type: int(11), nullable: false, default: null, extra: null }
+            search: { type: tinyint(1), nullable: false, default: null, extra: null }
+            hidden: { type: tinyint(1), nullable: false, default: null, extra: null }
+            export: { type: tinyint(1), nullable: false, default: null, extra: null }
+            import: { type: tinyint(1), nullable: false, default: null, extra: null }
+            mass_deletion: { type: tinyint(1), nullable: false, default: null, extra: null }
+            mass_edit: { type: tinyint(1), nullable: false, default: null, extra: null }
+            schema_overwrite: { type: tinyint(1), nullable: false, default: '1', extra: null }
+            history: { type: tinyint(1), nullable: false, default: null, extra: null }
+        primaryKey:
+            - id
+        indexes:
+            table_name: { type: UNIQUE, columns: [table_name] }
