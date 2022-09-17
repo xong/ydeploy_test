@@ -1,1 +1,2 @@
 2022-09-17 10:59:27 | Deprecated | str_replace(): Passing null to parameter #3 ($subject) of type array\|string is deprecated | redaxo/src/addons/developer/lib/synchronizer.php | 317
+2022-09-17 12:01:47 | Deprecated | str_replace(): Passing null to parameter #3 ($subject) of type array\|string is deprecated | redaxo/src/addons/developer/lib/synchronizer.php | 317
