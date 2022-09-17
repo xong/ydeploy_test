@@ -11,7 +11,7 @@ require __DIR__.'/redaxo/src/addons/ydeploy/deploy.php';
 
 set('repository', 'https://github.com/xong/ydeploy_test.git');
 
-host('servername')
+host('staging')
     ->hostname('maumha.de')
     ->set('deploy_path', '/kunden/536664_06108/webseiten/ydeploy-test.maumha.de')
 ;
