@@ -1,0 +1,66 @@
+package: ydeploy
+version: '1.1.1'
+author: Gregor Harlan
+supportpage: https://github.com/yakamara/ydeploy
+
+requires:
+    php: '>=7.3'
+    redaxo: ^5.10
+
+conflicts:
+    packages:
+        developer: '<3.7'
+
+console_commands:
+    ydeploy:diff: rex_ydeploy_command_diff
+    ydeploy:migrate: rex_ydeploy_command_migrate
+
+pages:
+    system/ydeploy:
+        title: YDeploy
+        pjax: false
+
+config:
+    fixtures:
+        tables:
+            config:
+                - { namespace: core }
+                - { namespace: mblock }
+                - { namespace: media_manager }
+                - { namespace: mform }
+                - { namespace: sprog }
+            markitup_profiles: ~
+            media_manager_type: ~
+            media_manager_type_effect: ~
+            metainfo_field: ~
+            metainfo_type: ~
+            module_action: ~
+            redactor_profiles: ~
+            redactor2_profiles: ~
+            yform_field: ~
+            yform_table: ~
+    protected_pages:
+        install: ~
+        markitup: ~
+        media_manager: ~
+        metainfo: ~
+        modules: ~
+        packages: ~
+        redactor: ~
+        redactor2: ~
+        templates: ~
+        yform:
+            setup: ~
+            docs: ~
+            manager:
+                - table_edit
+                - table_migrate
+                - tableset_import
+                - table_field
+
+installer_ignore:
+    - .github
+    - .gitignore
+    - .php-cs-fixer.cache
+    - .php-cs-fixer.dist.php
+    - psalm.xml
