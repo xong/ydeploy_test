@@ -1,6 +1,51 @@
 Changelog
 =========
 
+Version 2.12.1 – 24.02.2024
+---------------------------
+
+### Bugfixes
+
+* Bei Fehlern während des Updatens konnte Whoops oftmals nicht dargestellt werden, weil der Temp-Ordner zu früh gelöscht wurde (@gharlan)
+
+
+Version 2.12.0 – 09.02.2024
+---------------------------
+
+### Neu
+
+* Anzeige der Download-Anzahl und optional Sortierung danach (@eaCe)
+
+
+Version 2.11.1 – 18.03.2023
+---------------------------
+
+### Bugfixes
+
+* Nach AddOn-Updates wurde die neue `package.yml` teils nicht geladen und die alte blieb im Cache (@gharlan)
+
+
+Version 2.11.0 – 28.02.2023
+---------------------------
+
+### Neu
+
+* AddOns können nach Download direkt installiert werden (@pwechs)
+* Bei den verfügbaren Versionsnummern wird das Veröffentlichungsdatum per Title-Attribut gesetzt (@pwechs)
+* Stabilere Addon-Updates bei Rechteproblemen (@gharlan)
+* Command `install:download`: Version-Constraints werden unterstützt (@staabm)
+
+
+Version 2.10.1 – 20.02.2023
+---------------------------
+
+### Bugfixes
+
+* Bei Addon-Updates konnten Plugins nicht gelöscht werden, sie wurden immer aus dem alten Release "gerettet" (@gharlan)
+* Paket-Entpackung für Windows optimiert (@gharlan)
+* Cache-Dateien optimiert (@gharlan)
+
+
 Version 2.10.0 – 25.07.2022
 ---------------------------
 

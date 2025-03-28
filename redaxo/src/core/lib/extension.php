@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Klasse die Einsprungpunkte zur Erweiterung der Kernfunktionalitaetet bietet.
+ * Klasse die Einsprungpunkte zur Erweiterung der Kernfunktionalitaet bietet.
  *
  * @author Markus Staab
  *
@@ -18,9 +18,9 @@ abstract class rex_extension
     /**
      * Array of registered extensions.
      *
-     * @var array<string, array<self::*, list<array{callable, array}>>>
+     * @var array<string, array<self::*, list<array{callable, array<string, mixed>}>>>
      */
-    private static $extensions = [];
+    private static array $extensions = [];
 
     /**
      * Registers an extension point.
@@ -39,7 +39,7 @@ abstract class rex_extension
 
         $name = $extensionPoint->getName();
 
-        rex_timer::measure('EP: '.$name, static function () use ($extensionPoint, $name) {
+        rex_timer::measure('EP: ' . $name, static function () use ($extensionPoint, $name) {
             foreach ([self::EARLY, self::NORMAL, self::LATE] as $level) {
                 if (!isset(self::$extensions[$name][$level]) || !is_array(self::$extensions[$name][$level])) {
                     continue;
@@ -68,13 +68,12 @@ abstract class rex_extension
     /**
      * Registers an extension for an extension point.
      *
-     * @param string|string[] $extensionPoint Name(s) of extension point(s)
-     * @param callable        $extension      Callback extension
-     * @param self::*         $level          Runlevel (`rex_extension::EARLY`, `rex_extension::NORMAL` or `rex_extension::LATE`)
-     * @param array           $params         Additional params
-     *
      * @template T as rex_extension_point
-     * @psalm-param callable(T):mixed $extension
+     * @param string|list<string> $extensionPoint Name(s) of extension point(s)
+     * @param callable(T):mixed $extension Callback extension
+     * @param self::* $level Runlevel (`rex_extension::EARLY`, `rex_extension::NORMAL` or `rex_extension::LATE`)
+     * @param array<string, mixed> $params Additional params
+     * @return void
      */
     public static function register($extensionPoint, callable $extension, $level = self::NORMAL, array $params = [])
     {
@@ -85,13 +84,13 @@ abstract class rex_extension
 
         // bc
         if (is_string($level)) {
-            trigger_error(__METHOD__.': Argument $level should be one of the constants rex_extension::EARLY/NORMAL/LATE, but string "'.$level.'" given', E_USER_WARNING);
+            trigger_error(__METHOD__ . ': Argument $level should be one of the constants rex_extension::EARLY/NORMAL/LATE, but string "' . $level . '" given', E_USER_WARNING);
 
             $level = (int) $level;
         }
 
         if (!in_array($level, [self::EARLY, self::NORMAL, self::LATE], true)) {
-            throw new InvalidArgumentException('Argument $level should be one of the constants rex_extension::EARLY/NORMAL/LATE, but "'.(is_int($level) ? $level : get_debug_type($level)).'" given');
+            throw new InvalidArgumentException('Argument $level should be one of the constants rex_extension::EARLY/NORMAL/LATE, but "' . (is_int($level) ? $level : get_debug_type($level)) . '" given');
         }
 
         foreach ((array) $extensionPoint as $ep) {

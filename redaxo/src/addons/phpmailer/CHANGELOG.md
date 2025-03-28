@@ -1,6 +1,43 @@
 Changelog
 =========
 
+Version 2.14.0 – 22.10.2024
+---------------------------
+
+### Neu
+
+* Optimierung Error-Mails (bessere Vermeidung von Mehrfachversand, `X-Mailer`-Header für Identifizierung) (@skerbis)
+* Neues Konfigurationsfeld für `Return-Path` (@tyrant88)
+* Hilfe-Menüpunkt nach rechts versetzt (@alxndr-w)
+
+
+Version 2.13.1 – 12.03.2024
+---------------------------
+
+* Code-Optimierung (@skerbis)
+
+
+Version 2.13.0 – 09.02.2024
+---------------------------
+
+### Neu
+
+* Error-Mails:
+    - Doppelte Mails werden vermieden (@skerbis)
+    - URLs, wo die Fehler auftraten, werden mit ausgegeben (@skerbis)
+
+
+Version 2.12.0 – 28.02.2023
+---------------------------
+
+### Neu
+
+* Neue EPs `PHPMAILER_PRE_SEND` und `PHPMAILER_POST_SEND` (@skerbis)
+* Log: Reply-To wird mitgeloggt (@skerbis)
+* Archiv: Auch bei nicht erfolgreichen Versand wird die Mail archiviert (@skerbis)
+* Readme erweitert (@skerbis)
+
+
 Version 2.11.2 – 03.05.2022
 ---------------------------
 
@@ -210,4 +247,3 @@ Version 2.1.0 – 24.03.2016
 ### Bugfixes
 
 * Header X-Priority wird standardmäßig nicht mehr gesetzt, da die Mails sonst eher als Spam gewertet werden (@skerbis)
-

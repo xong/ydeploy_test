@@ -9,25 +9,19 @@
  */
 class rex_socket_proxy extends rex_socket
 {
-    /**
-     * @var string
-     */
+    /** @var string */
     protected $destinationHost;
-    /**
-     * @var int
-     */
+    /** @var int */
     protected $destinationPort;
-    /**
-     * @var bool
-     */
+    /** @var bool */
     protected $destinationSsl;
 
     /**
      * Sets the destination.
      *
      * @param string $host Host name
-     * @param int    $port Port number
-     * @param bool   $ssl  SSL flag
+     * @param int $port Port number
+     * @param bool $ssl SSL flag
      *
      * @return $this Current socket
      */
@@ -56,9 +50,6 @@ class rex_socket_proxy extends rex_socket
         return $this->setDestination($parts['host'], $parts['port'], $parts['ssl'])->setPath($parts['path']);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     protected function openConnection()
     {
         parent::openConnection();

@@ -28,6 +28,14 @@
                 }
             ]
         },
+        "live_mode": {
+            "description": "Live mode",
+            "type": "boolean"
+        },
+        "safe_mode": {
+            "description": "Safe mode",
+            "type": "boolean"
+        },
         "debug": {
             "description": "Debug mode",
             "oneOf": [
@@ -87,11 +95,15 @@
             "pattern": "^0\\d{3}$"
         },
         "session_duration": {
-            "description": "Session duration (seconds)",
+            "description": "A Session will be closed when not activly used for this timespan (seconds)",
             "type": "integer"
         },
         "session_keep_alive": {
-            "description": "Session keep alive (seconds)",
+            "description": "A open browser window will auto extended the session for this timespan (seconds)",
+            "type": "integer"
+        },
+        "session_max_overall_duration": {
+            "description": "A session cannot stay longer then this value, no matter its actively used once in a while (seconds)",
             "type": "integer"
         },
         "backend_login_policy": {
@@ -118,17 +130,29 @@
             "type": "object",
             "properties": {
                 "backend": {
-                    "$ref": "#/properties/session/definitions/cookie"
+                    "$ref": "#/properties/session/definitions/options"
                 },
                 "frontend": {
-                    "$ref": "#/properties/session/definitions/cookie"
+                    "$ref": "#/properties/session/definitions/options"
                 }
             },
             "additionalProperties": false,
             "definitions": {
-                "cookie": {
+                "options": {
                     "type": "object",
                     "properties": {
+                        "save_path": {
+                            "description": "Directory path used to save session data (session.save_path)",
+                            "type": ["null", "string"]
+                        },
+                        "sid_length": {
+                            "description": "Length of session ID string (session.sid_length)",
+                            "type": ["null", "integer"]
+                        },
+                        "sid_bits_per_character": {
+                            "description": "Number of bits in encoded session ID character (session.sid_bits_per_character)",
+                            "type": ["null", "integer"]
+                        },
                         "cookie": {
                             "type": "object",
                             "properties": {
@@ -346,6 +370,11 @@
                         "ssl_ca": {
                             "description": "File path to the ssl certificate authority",
                             "type": ["null", "string"]
+                        },
+                        "ssl_verify_server_cert": {
+                            "description": "Verification of the server SSL certificate",
+                            "type": "boolean",
+                            "default": true
                         }
                     },
                     "additionalProperties": false,

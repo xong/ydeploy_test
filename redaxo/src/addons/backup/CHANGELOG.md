@@ -1,6 +1,22 @@
 Changelog
 =========
 
+Version 2.9.1 – 09.02.2024
+--------------------------
+
+### Bugfixes
+
+* Backup-Cronjob: Bei Mailversand hatten gz-kodierte Backup-Anhänge eine falsche Dateiendung (@gharlan)
+
+
+Version 2.8.3 – 20.02.2023
+--------------------------
+
+### Bugfixes
+
+* Backup-Cronjob: Deprecated-Meldung entfernt (@gharlan)
+
+
 Version 2.8.2 – 25.07.2022
 --------------------------
 

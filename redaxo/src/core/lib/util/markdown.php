@@ -14,9 +14,7 @@ class rex_markdown
     public const SOFT_LINE_BREAKS = 'soft_line_breaks';
     public const HIGHLIGHT_PHP = 'highlight_php';
 
-    private function __construct()
-    {
-    }
+    private function __construct() {}
 
     /**
      * @return static
@@ -50,12 +48,12 @@ class rex_markdown
     /**
      * Parses markdown code and extracts a table-of-content.
      *
-     * @param string $code        Markdown code
-     * @param int    $topLevel    Top included headline level for TOC, e.g. `1` for `<h1>`
-     * @param int    $bottomLevel Bottom included headline level for TOC, e.g. `6` for `<h6>`
+     * @param string $code Markdown code
+     * @param int $topLevel Top included headline level for TOC, e.g. `1` for `<h1>`
+     * @param int $bottomLevel Bottom included headline level for TOC, e.g. `6` for `<h6>`
      * @param array<self::*, bool>|bool $options
      *
-     * @return array tupel of table-of-content and content
+     * @return list{string, string} tupel of table-of-content and content
      */
     public function parseWithToc($code, $topLevel = 2, $bottomLevel = 3, $options = [])
     {
@@ -85,7 +83,7 @@ class rex_markdown
                     if ($previous < $topLevel) {
                         $message .= "it starts with a h$level instead of a h$topLevel.";
                     } else {
-                        $message .= "a h$previous is followed by a h$level, but only a h".($previous + 1).' or lower is allowed.';
+                        $message .= "a h$previous is followed by a h$level, but only a h" . ($previous + 1) . ' or lower is allowed.';
                     }
 
                     throw new rex_exception($message);
@@ -103,7 +101,7 @@ class rex_markdown
             }
 
             $toc .= "<li>\n";
-            $toc .= '<a href="#'.rex_escape($header['id']).'">'.rex_escape($header['text'])."</a>\n";
+            $toc .= '<a href="#' . rex_escape($header['id']) . '">' . rex_escape($header['text']) . "</a>\n";
         }
 
         for (; $previous > $topLevel - 1; --$previous) {
@@ -125,16 +123,23 @@ final class rex_parsedown extends ParsedownExtra
 
     /** @var bool */
     public $generateToc = false;
+    /** @var int */
     public $topLevel = 2;
+    /** @var int */
     public $bottomLevel = 3;
+    /** @var list<array{level: int, id: string, text: string}> */
     public $headers = [];
 
+    /** @var array<string, true> */
     private $ids = [];
 
+    /**
+     * @return string
+     */
     public function text($text)
     {
         // https://github.com/erusev/parsedown-extra/issues/173
-        $errorReporting = error_reporting(error_reporting() ^ E_DEPRECATED);
+        $errorReporting = error_reporting(error_reporting() & ~E_DEPRECATED);
 
         try {
             return parent::text($text);
@@ -143,6 +148,9 @@ final class rex_parsedown extends ParsedownExtra
         }
     }
 
+    /**
+     * @return array|null
+     */
     protected function blockHeader($Line)
     {
         $block = parent::blockHeader($Line);
@@ -150,13 +158,19 @@ final class rex_parsedown extends ParsedownExtra
         return $this->handleHeader($block);
     }
 
-    protected function blockSetextHeader($Line, array $Block = null)
+    /**
+     * @return array|null
+     */
+    protected function blockSetextHeader($Line, ?array $Block = null)
     {
         $block = parent::blockSetextHeader($Line, $Block);
 
         return $this->handleHeader($block);
     }
 
+    /**
+     * @return array
+     */
     protected function blockFencedCodeComplete($Block)
     {
         /** @var array $Block */
@@ -179,13 +193,21 @@ final class rex_parsedown extends ParsedownExtra
 
         $missingPhpStart = !str_contains($text, '<?php') && !str_contains($text, '<?=');
         if ($missingPhpStart) {
-            $text = '<?php '.$text;
+            $text = '<?php ' . $text;
         }
 
-        $text = str_replace("\n", '', highlight_string($text, true));
+        $text = highlight_string($text, true);
+        if (str_starts_with($text, '<pre>')) {
+            $text = substr($text, 5, -6);
+        }
+
+        // php 8.3 fix
+        $text = preg_replace('@<code style="color:[^"]+">@', '<code>', $text, 1);
+        $text = preg_replace('@<span style="color:[^"]+">\n(<span style="color:[^"]+">)@', '$1', $text, 1);
+        $text = preg_replace('@<\/span>\n(<\/span>\n<\/code>)$@', '$1', $text, 1);
 
         if ($missingPhpStart) {
-            $text = preg_replace('@(<span style="color:[^"]+">)&lt;\?php&nbsp;@', '$1', $text, 1);
+            $text = preg_replace('@(<span style="color:[^"]+">)(?:&lt;|<)\?php(?:&nbsp;|\s)@', '$1', $text, 1);
         }
 
         /** @psalm-suppress MixedArrayAssignment */
@@ -199,7 +221,7 @@ final class rex_parsedown extends ParsedownExtra
     /**
      * @return array|null
      */
-    private function handleHeader(array $block = null)
+    private function handleHeader(?array $block = null)
     {
         if (!$this->generateToc) {
             return $block;
@@ -218,7 +240,7 @@ final class rex_parsedown extends ParsedownExtra
             $baseId = $id = rex_string::normalize($plainText, '-');
 
             for ($i = 1; isset($this->ids[$id]); ++$i) {
-                $id = $baseId.'-'.$i;
+                $id = $baseId . '-' . $i;
             }
 
             $block['element']['attributes']['id'] = $id;

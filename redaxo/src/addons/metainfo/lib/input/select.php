@@ -4,11 +4,12 @@
  * @package redaxo\metainfo
  *
  * @internal
+ *
+ * @extends rex_input<string|array<string>>
  */
 class rex_input_select extends rex_input
 {
-    /** @var rex_select */
-    private $select;
+    private rex_select $select;
 
     public function __construct()
     {
@@ -37,6 +38,9 @@ class rex_input_select extends rex_input
         parent::setAttribute($name, $value);
     }
 
+    /**
+     * @return rex_select
+     */
     public function getSelect()
     {
         return $this->select;

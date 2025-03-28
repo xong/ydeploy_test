@@ -1,2 +1,5 @@
 2022-09-17 10:59:27 | Deprecated | str_replace(): Passing null to parameter #3 ($subject) of type array\|string is deprecated | redaxo/src/addons/developer/lib/synchronizer.php | 317
 2022-09-17 12:01:47 | Deprecated | str_replace(): Passing null to parameter #3 ($subject) of type array\|string is deprecated | redaxo/src/addons/developer/lib/synchronizer.php | 317
+2025-03-28 10:06:44 | rex_sql_could_not_connect_exception | Could not connect to database | redaxo/src/core/lib/sql/sql.php | 154
+2025-03-28 10:07:15 | rex_sql_could_not_connect_exception | Could not connect to database | redaxo/src/core/lib/sql/sql.php | 154
+2025-03-28T10:09:52+01:00 | Info | REDAXO Core updated from 5.14.1 to version 5.18.3

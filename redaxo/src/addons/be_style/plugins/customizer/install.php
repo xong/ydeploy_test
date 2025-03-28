@@ -7,11 +7,12 @@ $message = '';
 $zipArchive = new ZipArchive();
 
 // use path relative to __DIR__ to get correct path in update temp dir
-$path = __DIR__.'/assets/vendor/codemirror.zip';
+$path = __DIR__ . '/assets/vendor/codemirror.zip';
 
 try {
-    if (true === $zipArchive->open($path) &&
-        $zipArchive->extractTo($plugin->getAssetsPath('vendor/'))
+    if (
+        true === $zipArchive->open($path)
+        && $zipArchive->extractTo($plugin->getAssetsPath('vendor/'))
     ) {
         $zipArchive->close();
     } else {
@@ -29,6 +30,6 @@ if (!$plugin->hasConfig('codemirror-options')) {
     $plugin->setConfig('codemirror-options', '');
 }
 
- if ('' != $message) {
-     throw new rex_functional_exception($message);
- }
+if ('' != $message) {
+    throw new rex_functional_exception($message);
+}

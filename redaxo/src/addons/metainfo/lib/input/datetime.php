@@ -4,14 +4,13 @@
  * @package redaxo\metainfo
  *
  * @internal
+ *
+ * @extends rex_input<array{year: numeric-string, month: numeric-string, day: numeric-string, hour: numeric-string, minute: numeric-string}>
  */
 class rex_input_datetime extends rex_input
 {
-    /** @var rex_input_date */
-    private $dateInput;
-
-    /** @var rex_input_time */
-    private $timeInput;
+    private rex_input_date $dateInput;
+    private rex_input_time $timeInput;
 
     public function __construct()
     {
@@ -21,11 +20,19 @@ class rex_input_datetime extends rex_input
         $this->timeInput = new rex_input_time();
     }
 
+    /**
+     * @param int|null $startYear
+     * @return void
+     */
     public function setStartYear($startYear)
     {
         $this->dateInput->setStartYear($startYear);
     }
 
+    /**
+     * @param int|null $endYear
+     * @return void
+     */
     public function setEndYear($endYear)
     {
         $this->dateInput->setEndYear($endYear);
@@ -43,9 +50,6 @@ class rex_input_datetime extends rex_input
         parent::setValue($value);
     }
 
-    /**
-     * @return array
-     */
     public function getValue()
     {
         return array_merge($this->dateInput->getValue(), $this->timeInput->getValue());
@@ -59,26 +63,41 @@ class rex_input_datetime extends rex_input
         parent::setAttribute($name, $value);
     }
 
+    /**
+     * @return rex_select
+     */
     public function getDaySelect()
     {
         return $this->dateInput->getDaySelect();
     }
 
+    /**
+     * @return rex_select
+     */
     public function getMonthSelect()
     {
         return $this->dateInput->getMonthSelect();
     }
 
+    /**
+     * @return rex_select
+     */
     public function getYearSelect()
     {
         return $this->dateInput->getYearSelect();
     }
 
+    /**
+     * @return rex_select
+     */
     public function getHourSelect()
     {
         return $this->timeInput->getHourSelect();
     }
 
+    /**
+     * @return rex_select
+     */
     public function getMinuteSelect()
     {
         return $this->timeInput->getMinuteSelect();

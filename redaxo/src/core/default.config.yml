@@ -1,4 +1,6 @@
 setup: true
+live_mode: false
+safe_mode: false
 debug:
     enabled: false
     throw_always_exception: false # `true` for all error levels, `[E_WARNING, E_NOTICE]` for subset
@@ -10,6 +12,7 @@ fileperm: '0664'
 dirperm: '0775'
 session_duration: 7200
 session_keep_alive: 21600
+session_max_overall_duration: 2419200 # 4 weeks
 backend_login_policy:
     login_tries_until_blocked: 50
     login_tries_until_delay: 3
@@ -20,6 +23,9 @@ backend_login_policy:
 # will no longer work.
 session:
     backend:
+        # save_path:
+        # sid_length:
+        # sid_bits_per_character:
         cookie:
             lifetime: null
             path: null
@@ -28,6 +34,9 @@ session:
             httponly: true
             samesite: 'Lax'
     frontend:
+        # save_path:
+        # sid_length:
+        # sid_bits_per_character:
         cookie:
             lifetime: null
             path: null
@@ -82,6 +91,7 @@ db:
         ssl_key: null
         ssl_cert: null
         ssl_ca: null
+        ssl_verify_server_cert: true
     2:
         host: ''
         login: ''
@@ -91,6 +101,7 @@ db:
         ssl_key: null
         ssl_cert: null
         ssl_ca: null
+        ssl_verify_server_cert: true
 use_accesskeys: true
 accesskeys:
     save: s

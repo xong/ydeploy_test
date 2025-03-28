@@ -67,7 +67,10 @@ if ('' == $func) {
 
     $field = $form->addTextField('name');
     $field->setLabel(rex_i18n::msg('name'));
-    $field->getValidator()->add('notEmpty');
+    $field->getValidator()
+        ->add(rex_validation_rule::NOT_EMPTY)
+        ->add(rex_validation_rule::MAX_LENGTH, null, 255)
+    ;
 
     $field = $form->addTextAreaField('description');
     $field->setLabel(rex_i18n::msg('description'));
@@ -139,7 +142,7 @@ if ('' == $func) {
 
     if ($fieldIds) {
         $content .= '
-            <script type="text/javascript">
+            <script type="text/javascript" nonce="' . rex_response::getNonce() . '">
             <!--
 
             jQuery(function($) {

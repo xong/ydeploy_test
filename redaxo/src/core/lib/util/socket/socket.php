@@ -49,7 +49,7 @@ class rex_socket
     protected $followRedirects = false;
     /** @var array<string, string> */
     protected $headers = [];
-    /** @vat resource */
+    /** @var resource */
     protected $stream;
     /** @var array<array-key, mixed> */
     protected $options = [];
@@ -57,11 +57,9 @@ class rex_socket
     protected $acceptCompression = false;
 
     /**
-     * Constructor.
-     *
      * @param string $host Host name
-     * @param int    $port Port number
-     * @param bool   $ssl  SSL flag
+     * @param int $port Port number
+     * @param bool $ssl SSL flag
      */
     protected function __construct($host, $port = 80, $ssl = false)
     {
@@ -78,8 +76,8 @@ class rex_socket
      * Factory method.
      *
      * @param string $host Host name
-     * @param int    $port Port number
-     * @param bool   $ssl  SSL flag
+     * @param int $port Port number
+     * @param bool $ssl SSL flag
      *
      * @return static Socket instance
      *
@@ -173,7 +171,7 @@ class rex_socket
      *
      * @return $this Current socket
      */
-    public function addBasicAuthorization($user, $password)
+    public function addBasicAuthorization(#[SensitiveParameter] $user, #[SensitiveParameter] $password)
     {
         $this->addHeader('Authorization', 'Basic ' . base64_encode($user . ':' . $password));
 
@@ -229,11 +227,8 @@ class rex_socket
     /**
      * Makes a POST request.
      *
-     * @param string|array|callable $data Body data as string or array (POST parameters) or a callback for writing the body
-     * @psalm-param string|array<string, string>|callable(resource): void $data
-     *
-     * @param array $files Files array, e.g. `array('myfile' => array('path' => $path, 'type' => 'image/png'))`
-     * @psalm-param array<string, array{path: string, type: string}> $files
+     * @param string|array<string, string>|callable(resource): void $data Body data as string or array (POST parameters) or a callback for writing the body
+     * @param array<string, array{path: string, type: string}> $files Files array, e.g. `array('myfile' => array('path' => $path, 'type' => 'image/png'))`
      *
      * @throws rex_socket_exception
      *
@@ -302,9 +297,8 @@ class rex_socket
     /**
      * Makes a request.
      *
-     * @param string          $method HTTP method, e.g. "GET"
-     * @param string|callable $data   Body data as string or a callback for writing the body
-     * @psalm-param string|callable(resource): void $data
+     * @param string $method HTTP method, e.g. "GET"
+     * @param string|callable(resource): void $data Body data as string or a callback for writing the body
      *
      * @throws InvalidArgumentException
      *
@@ -312,13 +306,13 @@ class rex_socket
      */
     public function doRequest($method, $data = '')
     {
-        return rex_timer::measure('Socket request: '.$this->host.$this->path, function () use ($method, $data) {
+        return rex_timer::measure('Socket request: ' . $this->host . $this->path, function () use ($method, $data) {
             if (!is_string($data) && !is_callable($data)) {
                 throw new InvalidArgumentException(sprintf('Expecting $data to be a string or a callable, but %s given!', gettype($data)));
             }
 
             if (!$this->ssl) {
-                rex_logger::logError(E_WARNING, 'You should not use non-secure socket connections while connecting to "'. $this->host .'"!', __FILE__, __LINE__);
+                rex_logger::logError(E_WARNING, 'You should not use non-secure socket connections while connecting to "' . $this->host . '"!', __FILE__, __LINE__);
             }
 
             $this->openConnection();
@@ -361,6 +355,7 @@ class rex_socket
      * Opens the socket connection.
      *
      * @throws rex_socket_exception
+     * @return void
      */
     protected function openConnection()
     {
@@ -377,7 +372,7 @@ class rex_socket
 
         try {
             $context = stream_context_create($this->options);
-            $this->stream = stream_socket_client($host.':'.$this->port, $errno, $errstr, (float) (ini_get('default_socket_timeout')), STREAM_CLIENT_CONNECT, $context);
+            $this->stream = stream_socket_client($host . ':' . $this->port, $errno, $errstr, (float) ini_get('default_socket_timeout'), STREAM_CLIENT_CONNECT, $context);
         } finally {
             restore_error_handler();
         }
@@ -402,11 +397,10 @@ class rex_socket
     /**
      * Writes a request to the opened connection.
      *
-     * @param string          $method  HTTP method, e.g. "GET"
-     * @param string          $path    Path
-     * @param array           $headers Headers
-     * @param string|callable $data    Body data as string or a callback for writing the body
-     * @psalm-param string|callable(resource): void $data
+     * @param string $method HTTP method, e.g. "GET"
+     * @param string $path Path
+     * @param array<string, string> $headers Headers
+     * @param string|callable(resource): void $data Body data as string or a callback for writing the body
      *
      * @throws rex_socket_exception
      *
@@ -445,7 +439,7 @@ class rex_socket
      *
      * @throws rex_socket_exception
      *
-     * @return array URL parts
+     * @return array{host: string, port: int, ssl: bool, path: string} URL parts
      */
     protected static function parseUrl($url)
     {
@@ -491,6 +485,4 @@ class rex_socket
  *
  * @package redaxo\core
  */
-class rex_socket_exception extends rex_exception
-{
-}
+class rex_socket_exception extends rex_exception {}

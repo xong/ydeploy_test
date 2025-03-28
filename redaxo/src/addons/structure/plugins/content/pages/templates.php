@@ -1,9 +1,5 @@
 <?php
 
-/**
- * @package redaxo5
- */
-
 echo rex_view::title(rex_i18n::msg('title_templates'));
 
 $OUT = true;
@@ -32,44 +28,19 @@ if ('delete' == $function) {
         $error = rex_i18n::msg('csrf_token_invalid');
     } else {
         $del = rex_sql::factory();
-        $del->setQuery('
-            SELECT article.id, article.clang_id, template.name
-            FROM ' . rex::getTable('article') . ' article
-            LEFT JOIN ' . rex::getTable('template') . ' template ON article.template_id=template.id
-            WHERE article.template_id=?
-            LIMIT 20
-        ', [$templateId]);
+        $templateIsInUseError = rex_template::templateIsInUse($templateId, 'cant_delete_template_because_its_in_use');
+        if (false !== $templateIsInUseError) {
+            $error .= $templateIsInUseError;
+        }
 
-        if ($del->getRows() > 0 || rex_template::getDefaultId() == $templateId) {
-            $templateInUseMessage = '';
-            $templatename = $del->getRows() ? $del->getValue('template.name') : null;
-            while ($del->hasNext()) {
-                $aid = $del->getValue('article.id');
-                $clangId = $del->getValue('article.clang_id');
-                $OOArt = rex_article::get($aid, $clangId);
+        if (rex_template::getDefaultId() == $templateId) {
+            $del = rex_sql::factory();
+            $del->setQuery('SELECT name FROM ' . rex::getTable('template') . ' WHERE id = ' . $templateId);
+            $templatename = $del->getValue('name');
 
-                $label = $OOArt->getName() . ' [' . $aid . ']';
-                if (rex_clang::count() > 1) {
-                    $label .= ' [' . rex_clang::get($clangId)->getCode() . ']';
-                }
-
-                $templateInUseMessage .= '<li><a href="' . rex_url::backendPage('content', ['article_id' => $aid, 'clang' => $clangId]) . '">' . rex_escape($label) . '</a></li>';
-                $del->next();
-            }
-
-            if ('' != $templateInUseMessage) {
-                $error .= rex_i18n::msg('cant_delete_template_because_its_in_use', $templatename);
-                $error .= '<ul>' . $templateInUseMessage . '</ul>';
-            }
-
-            if (rex_template::getDefaultId() == $templateId) {
-                if ('' == $templatename) {
-                    $del->setQuery('SELECT name FROM '.rex::getTable('template'). ' WHERE id = '.$templateId);
-                    $templatename = $del->getValue('name');
-                }
-                $error .= rex_i18n::msg('cant_delete_template_because_its_default_template', $templatename);
-            }
-        } else {
+            $error .= rex_i18n::msg('cant_delete_template_because_its_default_template', $templatename);
+        }
+        if ('' == $error) {
             $del->setQuery('DELETE FROM ' . rex::getTablePrefix() . 'template WHERE id = "' . $templateId . '" LIMIT 1'); // max. ein Datensatz darf loeschbar sein
             rex_template_cache::delete($templateId);
             $success = rex_i18n::msg('template_deleted');
@@ -101,6 +72,7 @@ if ('add' == $function || 'edit' == $function) {
     }
 
     if ('ja' == $save) {
+        $previousActive = $active;
         $active = rex_post('active', 'int');
         $templatename = rex_post('templatename', 'string');
         $template = rex_post('content', 'string');
@@ -145,7 +117,7 @@ if ('add' == $function || 'edit' == $function) {
         $TPL->setValue('name', $templatename);
         $TPL->setValue('active', $active);
         $TPL->setValue('content', $template);
-        $TPL->addGlobalCreateFields();
+        $TPL->addGlobalUpdateFields();
 
         $TPL->setArrayValue('attributes', $attributes);
 
@@ -176,29 +148,41 @@ if ('add' == $function || 'edit' == $function) {
                 }
             }
         } else {
-            $TPL->setWhere(['id' => $templateId]);
-            $TPL->addGlobalUpdateFields();
+            if ($previousActive && !$active) {
+                if (rex_template::getDefaultId() == $templateId) {
+                    $error .= rex_i18n::msg('cant_inactivate_template_because_its_default_template', $templatename);
+                }
 
-            try {
-                $TPL->update();
-                rex_template_cache::delete($templateId);
-                $success = rex_i18n::msg('template_updated');
-                $success = rex_extension::registerPoint(new rex_extension_point('TEMPLATE_UPDATED', $success, [
-                    'id' => $templateId,
-                    'key' => $templatekey,
-                    'name' => $templatename,
-                    'content' => $template,
-                    'active' => $active,
-                    'ctype' => $ctypes,
-                    'modules' => $modules,
-                    'categories' => $categories,
-                ]));
-            } catch (rex_sql_exception $e) {
-                if (rex_sql::ERROR_VIOLATE_UNIQUE_KEY == $e->getErrorCode()) {
-                    $error = rex_i18n::msg('template_key_exists');
-                    $save = 'nein';
-                } else {
-                    $error = $e->getMessage();
+                $templateIsInUseError = rex_template::templateIsInUse($templateId, 'cant_inactivate_template_because_its_in_use');
+                if (false !== $templateIsInUseError) {
+                    $error .= ($error ? '<br><br>' : '') . $templateIsInUseError;
+                }
+            }
+
+            if ('' == $error) {
+                $TPL->setWhere(['id' => $templateId]);
+
+                try {
+                    $TPL->update();
+                    rex_template_cache::delete($templateId);
+                    $success = rex_i18n::msg('template_updated');
+                    $success = rex_extension::registerPoint(new rex_extension_point('TEMPLATE_UPDATED', $success, [
+                        'id' => $templateId,
+                        'key' => $templatekey,
+                        'name' => $templatename,
+                        'content' => $template,
+                        'active' => $active,
+                        'ctype' => $ctypes,
+                        'modules' => $modules,
+                        'categories' => $categories,
+                    ]));
+                } catch (rex_sql_exception $e) {
+                    if (rex_sql::ERROR_VIOLATE_UNIQUE_KEY == $e->getErrorCode()) {
+                        $error = rex_i18n::msg('template_key_exists');
+                        $save = 'nein';
+                    } else {
+                        $error = $e->getMessage();
+                    }
                 }
             }
         }
@@ -321,7 +305,7 @@ if ('add' == $function || 'edit' == $function) {
         }
 
         $ctypesOut .= '
-            <script type="text/javascript">
+            <script type="text/javascript" nonce="' . rex_response::getNonce() . '">
             <!--
             jQuery(function($) {
         ';
@@ -367,13 +351,13 @@ if ('add' == $function || 'edit' == $function) {
         $formElements = [];
         $n = [];
         $n['label'] = '<label for="rex-id-templatename">' . rex_i18n::msg('template_name') . '</label>';
-        $n['field'] = '<input class="form-control" id="rex-id-templatename" type="text" name="templatename" value="' . rex_escape($templatename) . '" />';
+        $n['field'] = '<input class="form-control" id="rex-id-templatename" type="text" name="templatename" value="' . rex_escape($templatename) . '" maxlength="255" />';
         $n['note'] = rex_i18n::msg('translatable');
         $formElements[] = $n;
 
         $n = [];
         $n['label'] = '<label for="rex-id-templatekey">' . rex_i18n::msg('template_key') . '</label>';
-        $n['field'] = '<input class="form-control" id="rex-id-templatekey" type="text" name="templatekey" value="' . rex_escape($templatekey) . '" />';
+        $n['field'] = '<input class="form-control" id="rex-id-templatekey" type="text" name="templatekey" value="' . rex_escape($templatekey) . '" maxlength="191" autocorrect="off" autocapitalize="off" spellcheck="false" />';
         $n['note'] = rex_i18n::msg('template_key_notice');
         $formElements[] = $n;
 
@@ -396,7 +380,7 @@ if ('add' == $function || 'edit' == $function) {
         $formElements = [];
         $n = [];
         $n['label'] = '<label for="rex-id-content">' . rex_i18n::msg('header_template') . '</label>';
-        $n['field'] = '<textarea class="form-control rex-code rex-js-code" id="rex-id-content" name="content" spellcheck="false">' . rex_escape($template) . '</textarea>';
+        $n['field'] = '<textarea class="form-control rex-code rex-js-code" id="rex-id-content" name="content" autocapitalize="off" autocorrect="off" spellcheck="false">' . rex_escape($template) . '</textarea>';
         $formElements[] = $n;
 
         $fragment = new rex_fragment();
@@ -501,7 +485,7 @@ if ('add' == $function || 'edit' == $function) {
                 ' . $content . '
             </form>
 
-            <script type="text/javascript">
+            <script type="text/javascript" nonce="' . rex_response::getNonce() . '">
             <!--
             jQuery(function($) {
                 // store the currently selected tab in the hidden input#rex-js-form-template-tab
@@ -565,6 +549,9 @@ if ($OUT) {
 
     $list->setColumnLabel('name', rex_i18n::msg('header_template_description'));
     $list->setColumnParams('name', ['function' => 'edit', 'template_id' => '###id###']);
+    $list->setColumnFormat('name', 'custom', static function () use ($list) {
+        return $list->getColumnLink('name', rex_i18n::translate((string) $list->getValue('name')));
+    });
 
     $list->setColumnLabel('active', rex_i18n::msg('header_template_active'));
     $list->setColumnFormat('active', 'custom', static function () use ($list) {

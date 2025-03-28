@@ -4,8 +4,6 @@
  * Cronjob Addon.
  *
  * @author gharlan[at]web[dot]de Gregor Harlan
- *
- * @package redaxo5
  */
 
 $addon = rex_addon::get('cronjob');
@@ -104,7 +102,7 @@ if ('' == $func) {
     $list->setColumnParams('status', ['func' => 'setstatus', 'oldstatus' => '###status###', 'oid' => '###id###'] + $csrfToken->getUrlParams());
     $list->setColumnLayout('status', ['<th class="rex-table-action" colspan="4">###VALUE###</th>', '<td class="rex-table-action">###VALUE###</td>']);
     $list->setColumnFormat('status', 'custom', static function () use ($list) {
-        if (!class_exists($list->getValue('type'))) {
+        if (!class_exists($list->getValue('type')) || !in_array($list->getValue('type'), rex_cronjob_manager::getTypes())) {
             $str = rex_i18n::msg('cronjob_status_invalid');
         } elseif (1 == $list->getValue('status')) {
             $str = $list->getColumnLink('status', '<span class="rex-online"><i class="rex-icon rex-icon-active-true"></i> ' . rex_i18n::msg('cronjob_status_activated') . '</span>');
@@ -148,14 +146,18 @@ if ('' == $func) {
 
     $field = $form->addTextField('name');
     $field->setLabel($addon->i18n('name'));
-    $field->getValidator()->add('notEmpty', $addon->i18n('cronjob_error_no_name'));
+    $field->getValidator()
+        ->add(rex_validation_rule::NOT_EMPTY, $addon->i18n('cronjob_error_no_name'))
+        ->add(rex_validation_rule::MAX_LENGTH, null, 255)
+    ;
 
     $field = $form->addTextAreaField('description');
     $field->setLabel($addon->i18n('description'));
+    $field->getValidator()->add(rex_validation_rule::MAX_LENGTH, null, 255);
 
     $field = $form->addCheckboxField('environment');
     $field->setLabel($addon->i18n('environment'));
-    $field->setNotice($addon->i18n('environment_notice', rex_path::bin('console').' cronjob:run'));
+    $field->setNotice($addon->i18n('environment_notice', rex_path::bin('console') . ' cronjob:run'));
     $field->getValidator()->add('notEmpty', $addon->i18n('cronjob_error_no_environment'));
     $envFieldId = rex_escape($field->getAttribute('id'), 'js');
     $field->addOption($addon->i18n('environment_frontend'), 'frontend');
@@ -189,9 +191,13 @@ if ('' == $func) {
     foreach ($types as $class) {
         $cronjob = rex_cronjob::factory($class);
         if ($cronjob instanceof rex_cronjob) {
-            $cronjobs[$class] = $cronjob;
-            $select->addOption($cronjob->getTypeName(), $class);
+            $cronjobs[$cronjob->getTypeName() . $class] = $cronjob;
         }
+    }
+    ksort($cronjobs);
+    foreach ($cronjobs as $cronjob) {
+        $class = $cronjob::class;
+        $select->addOption($cronjob->getTypeName(), $class, 0, 0, ['data-cronjob_id' => rex_string::normalize($class)]);
     }
     if ('add' == $func) {
         $select->setSelected(rex_cronjob_phpcode::class);
@@ -213,7 +219,7 @@ if ('' == $func) {
     $fieldContainer->setAttribute('style', 'display: none');
     $fieldContainer->setMultiple(false);
     if ($activeType) {
-        $fieldContainer->setActive($activeType);
+        $fieldContainer->setActive(rex_string::normalize($activeType));
     }
 
     $form->addFieldset($addon->i18n('interval'));
@@ -231,7 +237,9 @@ if ('' == $func) {
 
     $envJs = '';
     $visible = [];
-    foreach ($cronjobs as $group => $cronjob) {
+    foreach ($cronjobs as $cronjob) {
+        $group = rex_string::normalize($cronjob::class);
+
         $disabled = array_diff(['frontend', 'backend', 'script'], (array) $cronjob->getEnvironments());
         if (count($disabled) > 0) {
             $envJs .= '
@@ -341,14 +349,18 @@ if ('' == $func) {
     $fragment->setVar('body', $content, false);
     $content = $fragment->parse('core/page/section.php');
 
-    echo $content; ?>
+    echo $content;
+?>
 
-    <script type="text/javascript">
+    <script type="text/javascript" nonce="<?= rex_response::getNonce() ?>">
     // <![CDATA[
         jQuery(function($){
             var currentShown = null;
-            $("#<?php echo $typeFieldId ?>").change(function(){
-                var next = $("#rex-"+ $(this).val());
+            $("#<?= $typeFieldId ?>").change(function(){
+
+                var cronjob_id = $(this).find('option:selected').data('cronjob_id');
+
+                var next = $("#rex-"+ cronjob_id);
 
                 if (next.is(currentShown)) {
                     return;
@@ -362,14 +374,14 @@ if ('' == $func) {
                 }
                 currentShown = next;
             }).change();
-            $('#<?php echo $typeFieldId ?>').change(function(){
-                $('#<?php echo $envFieldId ?> option').prop('disabled','');<?php echo $envJs; ?>
-            }).change();<?php echo $visibleJs . "\n"; ?>
+            $('#<?= $typeFieldId ?>').change(function(){
+                $('#<?= $envFieldId ?> option').prop('disabled','');<?= $envJs ?>
+            }).change();<?= $visibleJs . "\n" ?>
         });
     // ]]>
     </script>
 
-    <style>
+    <style nonce="<?= rex_response::getNonce() ?>">
         .rex-cronjob-interval-all .checkbox label {
             font-weight: 700;
         }

@@ -1,5 +1,5 @@
 package: cronjob
-version: '2.9.0'
+version: '2.11.1'
 author: 'Gregor Harlan'
 supportpage: https://github.com/redaxo/redaxo
 
@@ -18,8 +18,8 @@ pages:
         perm: admin[]
 
 requires:
-    php: '>=7.3'
-    redaxo: ^5.13.0
+    php: '>=8.1'
+    redaxo: ^5.17.0
 
 console_commands:
     cronjob:run: rex_command_cronjob_run

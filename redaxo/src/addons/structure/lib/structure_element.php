@@ -28,6 +28,8 @@ abstract class rex_structure_element
 
     /** @var int */
     protected $template_id = 0;
+
+    /** @var string */
     protected $path = '';
 
     /** @var int */
@@ -54,11 +56,9 @@ abstract class rex_structure_element
     /** @var string */
     protected $createuser = '';
 
+    /** @var list<string>|null */
     protected static $classVars;
 
-    /**
-     * Constructor.
-     */
     protected function __construct(array $params)
     {
         foreach (self::getClassVars() as $var) {
@@ -80,8 +80,8 @@ abstract class rex_structure_element
      * Returns Object Value.
      *
      * @param string $value
-     *
      * @return string|int|null
+     * @psalm-taint-source input
      */
     public function getValue($value)
     {
@@ -122,7 +122,7 @@ abstract class rex_structure_element
     /**
      * Returns an Array containing article field names.
      *
-     * @return string[]
+     * @return list<string>
      */
     public static function getClassVars()
     {
@@ -136,7 +136,7 @@ abstract class rex_structure_element
                 $genVars = rex_file::getCache($file, []);
                 unset($genVars['last_update_stamp']);
                 foreach ($genVars as $name => $value) {
-                    self::$classVars[] = $name;
+                    self::$classVars[] = (string) $name;
                 }
             } else {
                 // Im Backend die Spalten aus der DB auslesen / via EP holen
@@ -151,6 +151,9 @@ abstract class rex_structure_element
         return self::$classVars;
     }
 
+    /**
+     * @return void
+     */
     public static function resetClassVars()
     {
         self::$classVars = null;
@@ -160,7 +163,7 @@ abstract class rex_structure_element
      * Return an rex_structure_element object based on an id.
      * The instance will be cached in an instance-pool and therefore re-used by a later call.
      *
-     * @param int $id    the article id
+     * @param int $id the article id
      * @param int $clang the clang id
      *
      * @return static|null A rex_structure_element instance typed to the late-static binding type of the caller
@@ -205,12 +208,12 @@ abstract class rex_structure_element
     }
 
     /**
-     * @param int    $parentId
+     * @param int $parentId
      * @param string $listType
-     * @param bool   $ignoreOfflines
-     * @param int    $clang
+     * @param bool $ignoreOfflines
+     * @param int $clang
      *
-     * @return static[]
+     * @return list<static>
      */
     protected static function getChildElements($parentId, $listType, $ignoreOfflines = false, $clang = null)
     {
@@ -244,7 +247,7 @@ abstract class rex_structure_element
                     $list = rex_file::getCache($listFile);
                 }
                 return $list;
-            }
+            },
         );
     }
 
@@ -312,7 +315,7 @@ abstract class rex_structure_element
     /**
      * Returns the path ids of the category/article as an array.
      *
-     * @return int[]
+     * @return list<int>
      */
     public function getPathAsArray()
     {
@@ -331,6 +334,7 @@ abstract class rex_structure_element
      * Returns the name of the article.
      *
      * @return string
+     * @psalm-taint-source input
      */
     public function getName()
     {
@@ -427,10 +431,10 @@ abstract class rex_structure_element
     /**
      * Returns a link to this article.
      *
-     * @param array  $params             Parameter für den Link
-     * @param array  $attributes         Attribute die dem Link hinzugefügt werden sollen. Default: array
-     * @param string $sorroundTag        HTML-Tag-Name mit dem der Link umgeben werden soll, z.b. 'li', 'div'. Default: null
-     * @param array  $sorroundAttributes Attribute die Umgebenden-Element hinzugefügt werden sollen. Default: array
+     * @param array $params Parameter für den Link
+     * @param array $attributes Attribute die dem Link hinzugefügt werden sollen. Default: array
+     * @param string $sorroundTag HTML-Tag-Name mit dem der Link umgeben werden soll, z.b. 'li', 'div'. Default: null
+     * @param array $sorroundAttributes Attribute die Umgebenden-Element hinzugefügt werden sollen. Default: array
      *
      * @return string
      */
@@ -481,7 +485,7 @@ abstract class rex_structure_element
                 if ('' != $var) {
                     $cat = rex_category::get((int) $var, $this->clang_id);
                     if (!$cat) {
-                        throw new LogicException('No category found with id='. $var .' and clang='. $this->clang_id .'.');
+                        throw new LogicException('No category found with id=' . $var . ' and clang=' . $this->clang_id . '.');
                     }
                     $return[] = $cat;
                 }

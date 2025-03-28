@@ -5,20 +5,22 @@
  */
 class rex_form_container_element extends rex_form_element
 {
-    /** @var array<string, rex_form_element[]> */
-    private $fields;
+    /** @var array<string, list<rex_form_element>> */
+    private $fields = [];
     /** @var bool */
-    private $multiple;
+    private $multiple = true;
     /** @var string */
     private $active;
 
     // 1. Parameter nicht genutzt, muss aber hier stehen,
     // wg einheitlicher Konstrukturparameter
-    public function __construct($tag = '', rex_form_base $form = null, array $attributes = [])
+    /**
+     * @param string $tag
+     * @param array<string, int|string> $attributes
+     */
+    public function __construct($tag = '', ?rex_form_base $form = null, array $attributes = [])
     {
         parent::__construct('', $form, $attributes);
-        $this->fields = [];
-        $this->multiple = true;
     }
 
     public function setValue($value)
@@ -28,6 +30,7 @@ class rex_form_container_element extends rex_form_element
 
     /**
      * @param bool $multiple
+     * @return void
      */
     public function setMultiple($multiple = true)
     {
@@ -36,6 +39,7 @@ class rex_form_container_element extends rex_form_element
 
     /**
      * @param string $group
+     * @return void
      */
     public function setActive($group)
     {
@@ -68,20 +72,23 @@ class rex_form_container_element extends rex_form_element
             $this->fields[$group] = [];
         }
 
-        $field->setAttribute('id', $this->getAttribute('id').'-'.$group.'-'.$field->getFieldName());
-        $field->setAttribute('name', $this->getAttribute('name').'['.$group.']['.$field->getFieldName().']');
+        $field->setAttribute('id', $this->getAttribute('id') . '-' . $group . '-' . $field->getFieldName());
+        $field->setAttribute('name', $this->getAttribute('name') . '[' . $group . '][' . $field->getFieldName() . ']');
         $field->setValue($value);
 
         $this->fields[$group][] = $field;
         return $field;
     }
 
-    /** @return array<string, rex_form_element[]> */
+    /** @return array<string, list<rex_form_element>> */
     public function getFields()
     {
         return $this->fields;
     }
 
+    /**
+     * @return void
+     */
     protected function prepareInnerFields()
     {
         $values = $this->getValue();

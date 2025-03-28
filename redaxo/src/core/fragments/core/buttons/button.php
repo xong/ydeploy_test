@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @var rex_fragment $this
  * @psalm-scope-this rex_fragment
@@ -34,5 +35,5 @@ foreach ($this->buttons as $button) {
         $tag = 'a';
         $href = ' href="' . $button['url'] . '"';
     }
-    echo '<' .$tag . $href . rex_string::buildAttributes($button['attributes']) . '>' . $icon . $button['label'] . '</' . $tag . '>';
+    echo '<' . $tag . $href . rex_string::buildAttributes($button['attributes']) . '>' . $icon . $button['label'] . '</' . $tag . '>';
 }

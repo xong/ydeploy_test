@@ -1,6 +1,81 @@
 Changelog
 =========
 
+Version 2.17.1 – 04.03.2025
+---------------------------
+
+### Bugfixes
+
+* Beim Nutzen der Mediapool-Services im Frontend wurde der Media-Manager-Cache nicht gelöscht und der Verwendungscheck hat nicht gegriffen (@marcohanke)
+
+
+Version 2.17.0 – 22.10.2024
+---------------------------
+
+### Neu
+
+* Neuer EP `MEDIA_MANAGER_INIT`, der für jeden Aufruf getriggert wird (noch vor der Cache-Prüfung) (@gharlan)
+
+
+Version 2.16.0 – 12.03.2024
+---------------------------
+
+### Neu
+
+* Paginierung auf 100 Elemente pro Seite erhöht (@gharlan)
+
+
+Version 2.15.0 – 09.02.2024
+---------------------------
+
+### Neu
+
+* Effekt `convert2image`: Unterstützung für Videos (erfordert `ffmpeg`) (@skerbis)
+
+### Bugfixes
+
+* Auf Windows wurden Bilder teils neu generiert, obwohl sie bereits im Cache waren (@AndiLeni)
+* Effekt `resize`: Fehler vermeiden, wenn ein Werte (Breite/Höhe) leer gelassen wurden (@gharlan)
+* Effekt `header`: Fehler vermeiden bei Updates von älteren Versionen (@gharlan)
+
+
+Version 2.14.0 – 28.02.2023
+---------------------------
+
+### Neu
+
+* AVIF-Unterstützung: Verarbeitung von AVIF-Bildern und Umwandlung in AVIF (@gharlan)
+* Lossless WEBP wird unterstützt (Qualität mit Wert 101) (@gharlan)
+* Effekt `workspace`:
+    - Optionaler Abstand zum Rand (@frood)
+    - Optionales Hintergrundbild (@frood)
+* Effekt `header`: `noindex` kann aktiviert werden (@bitshiftersgmbh)
+
+
+Version 2.13.3 – 20.02.2023
+---------------------------
+
+### Bugfixes
+
+* Effekt `resize`: Werte mit `px`-Suffix wurden nicht akzeptiert (@gharlan)
+
+
+Version 2.13.2 – 16.12.2022
+---------------------------
+
+### Bugfixes
+
+* Seit 2.13.1 kam es bei Nutzung von `rex_media_manager::create` teils zur Auslieferung der Bilder in Originalgröße (@gharlan)
+
+
+Version 2.13.1 – 13.12.2022
+---------------------------
+
+### Bugfixes
+
+* Wenn die Datei aus dem Cache kommt, war im Objekt der `media_path` nicht korrekt gesetzt (relevant für EPs etc.) (@dergel, @gharlan)
+
+
 Version 2.13.0 – 25.07.2022
 ---------------------------
 

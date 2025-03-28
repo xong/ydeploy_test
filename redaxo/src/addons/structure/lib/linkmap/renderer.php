@@ -14,7 +14,7 @@ abstract class rex_linkmap_tree_renderer
     {
         $category = rex_category::get($categoryId);
 
-        $mountpoints = rex::getUser()->getComplexPerm('structure')->getMountpointCategories();
+        $mountpoints = rex::requireUser()->getComplexPerm('structure')->getMountpointCategories();
         if (count($mountpoints) > 0) {
             $roots = $mountpoints;
             if (!$category && 1 === count($roots)) {
@@ -39,8 +39,8 @@ abstract class rex_linkmap_tree_renderer
     /**
      * Returns the markup of a tree structure, with $children as root categories and respecing $activeTreeIds as the active path.
      *
-     * @param rex_category[] $children      A array of rex_category objects representing the top level objects
-     * @param int[]          $activeTreeIds
+     * @param list<rex_category> $children A array of rex_category objects representing the top level objects
+     * @param list<int> $activeTreeIds
      *
      * @return string the rendered markup
      */
@@ -111,7 +111,7 @@ abstract class rex_linkmap_tree_renderer
 
         $icon = '<i class="rex-icon rex-icon-' . ($OOobject->isSiteStartArticle() ? 'sitestartarticle' : ($OOobject->isStartArticle() ? 'startarticle' : 'article')) . '"></i>';
 
-        return '<li' . $liAttr . '><a' . $linkAttr . '>' . $icon . ' ' . rex_escape($label) . '<span class="list-item-suffix">'.$OOobject->getId().'</span></a>';
+        return '<li' . $liAttr . '><a' . $linkAttr . '>' . $icon . ' ' . rex_escape($label) . '<span class="list-item-suffix">' . $OOobject->getId() . '</span></a>';
     }
 }
 
@@ -128,7 +128,7 @@ abstract class rex_linkmap_article_list_renderer
     public function getList($categoryId)
     {
         $isRoot = 0 === $categoryId;
-        $mountpoints = rex::getUser()->getComplexPerm('structure')->getMountpoints();
+        $mountpoints = rex::requireUser()->getComplexPerm('structure')->getMountpoints();
 
         if ($isRoot && 1 === count($mountpoints)) {
             $categoryId = reset($mountpoints);

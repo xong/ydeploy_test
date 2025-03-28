@@ -1,5 +1,8 @@
 <?php
 
+use JetBrains\PhpStorm\Deprecated;
+use Symfony\Component\HttpFoundation\Request;
+
 /**
  * REX base class for core properties etc.
  *
@@ -14,14 +17,15 @@ class rex
     /**
      * Array of properties.
      *
-     * @var array
-     * @psalm-var array<string, mixed>
+     * @var array<string, mixed>
      */
     protected static $properties = [];
 
     /**
      * @see rex_config::set()
      *
+     * @param string|array<string, mixed> $key The associated key or an associative array of key/value pairs
+     * @param mixed $value The value to save
      * @return bool TRUE when an existing value was overridden, otherwise FALSE
      */
     public static function setConfig($key, $value = null)
@@ -32,11 +36,11 @@ class rex
     /**
      * @see rex_config::get()
      *
-     * @return mixed the value for $key or $default if $key cannot be found in the given $namespace
-     *
      * @template T as ?string
-     * @phpstan-template T
-     * @psalm-param T $key
+     * @param T $key The associated key
+     * @param mixed $default Default return value if no associated-value can be found
+     * @throws InvalidArgumentException
+     * @return mixed the value for $key or $default if $key cannot be found in the given $namespace
      * @psalm-return (T is string ? mixed|null : array<string, mixed>)
      */
     public static function getConfig($key = null, $default = null)
@@ -47,6 +51,7 @@ class rex
     /**
      * @see rex_config::has()
      *
+     * @param string $key The associated key
      * @return bool TRUE if the key is set, otherwise FALSE
      */
     public static function hasConfig($key)
@@ -57,6 +62,7 @@ class rex
     /**
      * @see rex_config::remove()
      *
+     * @param string $key The associated key
      * @return bool TRUE if the value was found and removed, otherwise FALSE
      */
     public static function removeConfig($key)
@@ -67,8 +73,8 @@ class rex
     /**
      * Sets a property. Changes will not be persisted accross http request boundaries.
      *
-     * @param string $key   Key of the property
-     * @param mixed  $value Value for the property
+     * @param string $key Key of the property
+     * @param mixed $value Value for the property
      *
      * @throws InvalidArgumentException on invalid parameters
      *
@@ -116,6 +122,12 @@ class rex
                 if (null !== $value && !$value instanceof rex_console_application) {
                     throw new InvalidArgumentException(sprintf('"%s" property: expecting $value to be an instance of rex_console_application, "%s" found!', $key, get_debug_type($value)));
                 }
+                break;
+            case 'version':
+                if (!is_string($value) || !preg_match('/^\d+(?:\.\d+)*(?:-\w+)?$/', $value)) {
+                    throw new InvalidArgumentException('"' . $key . '" property: expecting $value to be a valid version string');
+                }
+                break;
         }
         $exists = isset(self::$properties[$key]);
         self::$properties[$key] = $value;
@@ -125,14 +137,16 @@ class rex
     /**
      * Returns a property.
      *
-     * @param string $key     Key of the property
-     * @param mixed  $default Default value, will be returned if the property isn't set
+     * @param string $key Key of the property
+     * @param mixed $default Default value, will be returned if the property isn't set
      *
      * @throws InvalidArgumentException on invalid parameters
      *
      * @return mixed The value for $key or $default if $key cannot be found
      * @psalm-return (
      *     $key is 'login' ? rex_backend_login|null :
+     *     ($key is 'live_mode' ? bool :
+     *     ($key is 'safe_mode' ? bool :
      *     ($key is 'debug' ? array{enabled: bool, throw_always_exception: bool|int} :
      *     ($key is 'lang_fallback' ? string[] :
      *     ($key is 'use_accesskeys' ? bool :
@@ -149,7 +163,7 @@ class rex
      *     ($key is 'error_email' ? string :
      *     ($key is 'lang' ? non-empty-string :
      *     ($key is 'instname' ? non-empty-string :
-     *     ($key is 'theme' ? non-empty-string :
+     *     ($key is 'theme' ? string :
      *     ($key is 'start_page' ? non-empty-string :
      *     ($key is 'socket_proxy' ? non-empty-string|null :
      *     ($key is 'password_policy' ? array<string, scalar> :
@@ -159,21 +173,17 @@ class rex
      *     ($key is 'system_addons' ? non-empty-string[] :
      *     ($key is 'setup_addons' ? non-empty-string[] :
      *     mixed|null
-     *     )))))))))))))))))))))))))
+     *     )))))))))))))))))))))))))))
      * )
      */
     public static function getProperty($key, $default = null)
     {
-        /** @psalm-suppress TypeDoesNotContainType **/
+        /** @psalm-suppress TypeDoesNotContainType */
         if (!is_string($key)) {
             throw new InvalidArgumentException('Expecting $key to be string, but ' . gettype($key) . ' given!');
         }
-        /** @psalm-suppress MixedReturnStatement **/
-        if (isset(self::$properties[$key])) {
-            return self::$properties[$key];
-        }
-        /** @psalm-suppress MixedReturnStatement **/
-        return $default;
+        /** @psalm-suppress MixedReturnStatement */
+        return self::$properties[$key] ?? $default;
     }
 
     /**
@@ -262,6 +272,10 @@ class rex
      */
     public static function isDebugMode()
     {
+        if (self::isLiveMode()) {
+            return false;
+        }
+
         $debug = self::getDebugFlags();
 
         return $debug['enabled'];
@@ -270,15 +284,14 @@ class rex
     /**
      * Returns the debug flags.
      *
-     * @return array
-     * @psalm-return array{enabled: bool, throw_always_exception: bool|int}
+     * @return array{enabled: bool, throw_always_exception: bool|int}
      */
     public static function getDebugFlags()
     {
         $flags = self::getProperty('debug', []);
 
-        $flags['enabled'] = $flags['enabled'] ?? false;
-        $flags['throw_always_exception'] = $flags['throw_always_exception'] ?? false;
+        $flags['enabled'] ??= false;
+        $flags['throw_always_exception'] ??= false;
 
         return $flags;
     }
@@ -290,13 +303,32 @@ class rex
      */
     public static function isSafeMode()
     {
-        return self::isBackend() && PHP_SESSION_ACTIVE == session_status() && rex_session('safemode', 'boolean', false);
+        if (!self::isBackend() || self::isLiveMode()) {
+            return false;
+        }
+
+        if (self::getProperty('safe_mode')) {
+            return true;
+        }
+
+        return PHP_SESSION_ACTIVE == session_status() && rex_session('safemode', 'boolean', false);
+    }
+
+    /**
+     * Returns if the live mode is active.
+     */
+    public static function isLiveMode(): bool
+    {
+        return (bool) self::getProperty('live_mode');
     }
 
     /**
      * Returns the table prefix.
      *
-     * @return string
+     * @return non-empty-string
+     *
+     * @phpstandba-inference-placeholder 'rex_'
+     * @psalm-taint-escape sql
      */
     public static function getTablePrefix()
     {
@@ -306,9 +338,9 @@ class rex
     /**
      * Adds the table prefix to the table name.
      *
-     * @param string $table Table name
+     * @param non-empty-string $table Table name
      *
-     * @return string
+     * @return non-empty-string
      */
     public static function getTable($table)
     {
@@ -318,7 +350,10 @@ class rex
     /**
      * Returns the temp prefix.
      *
-     * @return string
+     * @return non-empty-string
+     *
+     * @phpstandba-inference-placeholder 'tmp_'
+     * @psalm-taint-escape sql
      */
     public static function getTempPrefix()
     {
@@ -328,7 +363,7 @@ class rex
     /**
      * Returns the current user.
      *
-     * @return null|rex_user
+     * @return rex_user|null
      */
     public static function getUser()
     {
@@ -354,7 +389,7 @@ class rex
     /**
      * Returns the current impersonator user.
      *
-     * @return null|rex_user
+     * @return rex_user|null
      */
     public static function getImpersonator()
     {
@@ -366,14 +401,14 @@ class rex
     /**
      * Returns the console application.
      *
-     * @return null|rex_console_application
+     * @return rex_console_application|null
      */
     public static function getConsole()
     {
         return self::getProperty('console', null);
     }
 
-    public static function getRequest(): Symfony\Component\HttpFoundation\Request
+    public static function getRequest(): Request
     {
         $request = self::getProperty('request');
 
@@ -396,7 +431,7 @@ class rex
         if (!$config) {
             $configFile = rex_path::coreData('config.yml');
 
-            throw new rex_exception('Unable to read db config from config.yml "'. $configFile .'"');
+            throw new rex_exception('Unable to read db config from config.yml "' . $configFile . '"');
         }
 
         return new rex_config_db($config[$db]);
@@ -405,7 +440,7 @@ class rex
     /**
      * Returns the server URL.
      *
-     * @param null|string $protocol
+     * @param string|null $protocol
      *
      * @return string
      */
@@ -447,6 +482,7 @@ class rex
      */
     public static function getVersion($format = null)
     {
+        /** @psalm-taint-escape file */
         $version = self::getProperty('version');
 
         if ($format) {
@@ -457,15 +493,17 @@ class rex
 
     /**
      * @deprecated since 5.10, use `rex_version::gitHash` instead
+     * @param string $path
+     * @return non-empty-string|false
      */
-    #[\JetBrains\PhpStorm\Deprecated(reason: 'since 5.10, use `rex_version::gitHash` instead', replacement: 'rex_version::gitHash(!%parametersList%)')]
+    #[Deprecated(reason: 'since 5.10, use `rex_version::gitHash` instead', replacement: 'rex_version::gitHash(%parametersList%)')]
     public static function getVersionHash($path, ?string $repo = null)
     {
         return rex_version::gitHash($path, $repo) ?? false;
     }
 
     /**
-     * @return array<string, array{install: bool, status: bool, plugins?: array<string, array{install: bool, status: bool}>}>
+     * @return array<non-empty-string, array{install: bool, status: bool, plugins?: array<string, array{install: bool, status: bool}>}>
      * @psalm-suppress MixedReturnTypeCoercion
      */
     public static function getPackageConfig(): array
@@ -474,8 +512,7 @@ class rex
     }
 
     /**
-     * @return list<string>
-     * @psalm-suppress MixedReturnTypeCoercion
+     * @return list<non-empty-string>
      */
     public static function getPackageOrder(): array
     {
@@ -486,7 +523,7 @@ class rex
      * Returns the title tag and if the property "use_accesskeys" is true, the accesskey tag.
      *
      * @param string $title Title
-     * @param string $key   Key for the accesskey
+     * @param string $key Key for the accesskey
      *
      * @return string
      */
@@ -509,7 +546,7 @@ class rex
      */
     public static function getFilePerm()
     {
-        return (int) self::getProperty('fileperm', 0664);
+        return (int) self::getProperty('fileperm', 0o664);
     }
 
     /**
@@ -519,7 +556,7 @@ class rex
      */
     public static function getDirPerm()
     {
-        return (int) self::getProperty('dirperm', 0775);
+        return (int) self::getProperty('dirperm', 0o775);
     }
 
     /**

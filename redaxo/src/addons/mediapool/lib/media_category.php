@@ -10,24 +10,24 @@ class rex_media_category
     use rex_instance_list_pool_trait;
     use rex_instance_pool_trait;
 
-    // id
-    private $id = '';
-    // parent_id
-    private $parentId = '';
+    /** @var int */
+    private $id;
+    /** @var int */
+    private $parentId;
 
-    // name
+    /** @var string */
     private $name = '';
-    // path
+    /** @var string */
     private $path = '';
 
-    // createdate
-    private $createdate = '';
-    // updatedate
-    private $updatedate = '';
+    /** @var int */
+    private $createdate;
+    /** @var int */
+    private $updatedate;
 
-    // createuser
+    /** @var string */
     private $createuser = '';
-    // updateuser
+    /** @var string */
     private $updateuser = '';
 
     /**
@@ -55,17 +55,17 @@ class rex_media_category
             if ($cache) {
                 $cat = new static();
 
-                $cat->id = $cache['id'];
-                $cat->parentId = $cache['parent_id'];
+                $cat->id = (int) $cache['id'];
+                $cat->parentId = (int) $cache['parent_id'];
 
-                $cat->name = $cache['name'];
-                $cat->path = $cache['path'];
+                $cat->name = (string) $cache['name'];
+                $cat->path = (string) $cache['path'];
 
-                $cat->createdate = $cache['createdate'];
-                $cat->updatedate = $cache['updatedate'];
+                $cat->createdate = (int) $cache['createdate'];
+                $cat->updatedate = (int) $cache['updatedate'];
 
-                $cat->createuser = $cache['createuser'];
-                $cat->updateuser = $cache['updateuser'];
+                $cat->createuser = (string) $cache['createuser'];
+                $cat->updateuser = (string) $cache['updateuser'];
 
                 return $cat;
             }
@@ -75,7 +75,7 @@ class rex_media_category
     }
 
     /**
-     * @return self[]
+     * @return list<self>
      */
     public static function getRootCategories()
     {
@@ -85,7 +85,7 @@ class rex_media_category
     /**
      * @param int $parentId
      *
-     * @return self[]
+     * @return list<self>
      */
     protected static function getChildCategories($parentId)
     {
@@ -95,7 +95,7 @@ class rex_media_category
             return [];
         }
 
-        return self::getInstanceList([$parentId, 'children'], [self::class, 'get'], static function ($parentId) {
+        return self::getInstanceList([$parentId, 'children'], self::get(...), static function ($parentId) {
             $catlistPath = rex_path::addonCache('mediapool', $parentId . '.mclist');
 
             $list = rex_file::getCache($catlistPath, null);
@@ -196,7 +196,7 @@ class rex_media_category
      * Get an array of all parentCategories.
      * Returns an array of rex_media_category objects sorted by $priority.
      *
-     * @return self[]
+     * @return list<self>
      */
     public function getParentTree()
     {
@@ -234,7 +234,7 @@ class rex_media_category
     }
 
     /**
-     * @return self[]
+     * @return list<self>
      */
     public function getChildren()
     {
@@ -242,11 +242,11 @@ class rex_media_category
     }
 
     /**
-     * @return rex_media[]
+     * @return list<rex_media>
      */
     public function getMedia()
     {
-        return self::getInstanceList([$this->getId(), 'media'], [rex_media::class, 'get'], static function ($id) {
+        return self::getInstanceList([$this->getId(), 'media'], rex_media::get(...), static function ($id) {
             $listPath = rex_path::addonCache('mediapool', $id . '.mlist');
 
             $list = rex_file::getCache($listPath, null);

@@ -1,5 +1,7 @@
 <?php
 
+use JetBrains\PhpStorm\Deprecated;
+
 /**
  * @author gharlan
  *
@@ -8,30 +10,22 @@
 class rex_password_policy
 {
     /**
-     * @var array<string, array{min?: int, max?: int}>
-     */
-    private $options;
-
-    /**
      * @param array<string, array{min?: int, max?: int}> $options
      */
-    public function __construct(array $options)
-    {
-        $this->options = $options;
-    }
+    public function __construct(
+        private array $options,
+    ) {}
 
     /**
-     * @param string   $password
-     * @param null|int $id
+     * @param string $password
+     * @param int|null $id
      *
      * @throws rex_exception
      *
      * @return true|string `true` on success, otherwise an error message
      */
-    public function check(
-        #[\SensitiveParameter]
-        $password, $id = null
-    ) {
+    public function check(#[SensitiveParameter] $password, $id = null)
+    {
         if ($this->isValid($password)) {
             return true;
         }
@@ -54,7 +48,7 @@ class rex_password_policy
                 continue;
             }
 
-            $parts[] = rex_i18n::msg('password_rule_'.$key, $constraint);
+            $parts[] = rex_i18n::msg('password_rule_' . $key, $constraint);
         }
 
         return $parts ? implode('; ', $parts) : null;
@@ -89,13 +83,13 @@ class rex_password_policy
         $allowed = $mapping;
         foreach ($mapping as $rexKey => $htmlKey) {
             if (($this->options[$rexKey]['min'] ?? 0) > 0) {
-                $rules[] = 'required: '.$htmlKey;
+                $rules[] = 'required: ' . $htmlKey;
             }
             if (($this->options[$rexKey]['max'] ?? 1) <= 0) {
                 unset($allowed[$rexKey]);
             }
         }
-        $rules[] = 'allowed: '.implode(', ', $allowed);
+        $rules[] = 'allowed: ' . implode(', ', $allowed);
         $attr['passwordrules'] = implode('; ', $rules);
 
         return $attr;
@@ -106,43 +100,28 @@ class rex_password_policy
      *
      * @deprecated since 5.12, use `getDescription` instead
      */
-    #[\JetBrains\PhpStorm\Deprecated(reason: 'since 5.12, use `getDescription` instead', replacement: '%class%->getDescription()')]
+    #[Deprecated(reason: 'since 5.12, use `getDescription` instead', replacement: '%class%->getDescription()')]
     protected function getRule()
     {
         return $this->getDescription() ?? '';
     }
 
     /**
+     * @param string $password
      * @return bool
      */
-    protected function isValid(
-        #[\SensitiveParameter]
-        $password
-    ) {
+    protected function isValid(#[SensitiveParameter] $password)
+    {
         foreach ($this->options as $key => $options) {
-            switch ($key) {
-                case 'length':
-                    $count = mb_strlen($password);
-                    break;
-                case 'letter':
-                    $count = preg_match_all('/[a-zA-Z]/', $password);
-                    break;
-                case 'uppercase':
-                    $count = preg_match_all('/[A-Z]/', $password);
-                    break;
-                case 'lowercase':
-                    $count = preg_match_all('/[a-z]/', $password);
-                    break;
-                case 'digit':
-                    $count = preg_match_all('/[0-9]/', $password);
-                    break;
-                case 'symbol':
-                    $count = preg_match_all('/[^a-zA-Z0-9]/', $password);
-                    break;
-
-                default:
-                    throw new rex_exception(sprintf('Unknown password_policy key "%s".', $key));
-            }
+            $count = match ($key) {
+                'length' => mb_strlen($password),
+                'letter' => preg_match_all('/[a-zA-Z]/', $password),
+                'uppercase' => preg_match_all('/[A-Z]/', $password),
+                'lowercase' => preg_match_all('/[a-z]/', $password),
+                'digit' => preg_match_all('/\d/', $password),
+                'symbol' => preg_match_all('/[^a-zA-Z0-9]/', $password),
+                default => throw new rex_exception(sprintf('Unknown password_policy key "%s".', $key)),
+            };
 
             if (!$this->matchesCount($count, $options)) {
                 return false;

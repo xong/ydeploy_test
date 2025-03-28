@@ -14,22 +14,23 @@ rex_extension::register('BACKUP_BEFORE_DB_IMPORT', 'rex_metainfo_cleanup');
  * Alle Metafelder löschen, nicht das nach einem Import in der Parameter Tabelle
  * noch Datensätze zu Feldern stehen, welche nicht als Spalten in der
  * rex_article angelegt wurden!
+ * @param rex_extension_point|array $epOrParams
+ * @return void
  */
 function rex_metainfo_cleanup($epOrParams)
 {
     $params = $epOrParams instanceof rex_extension_point ? $epOrParams->getParams() : $epOrParams;
     // Cleanup nur durchführen, wenn auch die rex_article Tabelle neu angelegt wird
-    if (isset($params['force']) && true != $params['force'] &&
-        !str_contains($params['content'], 'CREATE TABLE `' . rex::getTablePrefix() . 'article`') &&
-        !str_contains($params['content'], 'CREATE TABLE ' . rex::getTablePrefix() . 'article')
+    if (
+        isset($params['force']) && true != $params['force']
+        && !str_contains($params['content'], 'CREATE TABLE `' . rex::getTablePrefix() . 'article`')
+        && !str_contains($params['content'], 'CREATE TABLE ' . rex::getTablePrefix() . 'article')
     ) {
         return;
     }
 
-    // check wheter tables exists
-    $tables = rex_sql::factory()->getTables();
-    if (!isset($tables[rex::getTablePrefix() . 'metainfo_field'])) {
-        return false;
+    if (!rex_sql_table::get(rex::getTable('metainfo_field'))->exists()) {
+        return;
     }
 
     // since this extension may be used also when the addon is not yet installed,
@@ -41,10 +42,10 @@ function rex_metainfo_cleanup($epOrParams)
 
     for ($i = 0; $i < $sql->getRows(); ++$i) {
         $prefix = rex_metainfo_meta_prefix((string) $sql->getValue('name'));
-        $table = rex_metainfo_meta_table($prefix);
+        $table = rex_type::string(rex_metainfo_meta_table($prefix));
         $tableManager = new rex_metainfo_table_manager($table);
 
-        $tableManager->deleteColumn($sql->getValue('name'));
+        $tableManager->deleteColumn((string) $sql->getValue('name'));
 
         $sql->next();
     }

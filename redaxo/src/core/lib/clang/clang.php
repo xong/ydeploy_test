@@ -10,43 +10,24 @@
 #[AllowDynamicProperties]
 class rex_clang
 {
-    /**
-     * @var bool
-     */
-    private static $cacheLoaded = false;
-    /**
-     * @var self[]
-     */
-    private static $clangs = [];
-    /**
-     * @var int|null
-     */
+    private static bool $cacheLoaded = false;
+    /** @var array<int, self> */
+    private static array $clangs = [];
+    /** @var int|null */
     private static $currentId;
 
-    /**
-     * @var int
-     */
+    /** @var int */
     private $id;
-    /**
-     * @var string
-     */
+    /** @var string */
     private $code;
-    /**
-     * @var string
-     */
+    /** @var string */
     private $name;
-    /**
-     * @var int
-     */
+    /** @var int */
     private $priority;
-    /**
-     * @var bool
-     */
+    /** @var bool */
     private $status;
 
-    private function __construct()
-    {
-    }
+    private function __construct() {}
 
     /**
      * Checks if the given clang exists.
@@ -121,6 +102,7 @@ class rex_clang
      * @param int $id Clang id
      *
      * @throws rex_exception
+     * @return void
      */
     public static function setCurrentId($id)
     {
@@ -201,15 +183,7 @@ class rex_clang
      */
     public function getValue($key)
     {
-        if (isset($this->$key)) {
-            return $this->$key;
-        }
-
-        if (isset($this->{'clang_' . $key})) {
-            return $this->{'clang_' . $key};
-        }
-
-        return null;
+        return $this->$key ?? $this->{'clang_' . $key} ?? null;
     }
 
     /**
@@ -230,7 +204,7 @@ class rex_clang
      *
      * @param bool $ignoreOfflines
      *
-     * @return int[]
+     * @return list<int>
      */
     public static function getAllIds($ignoreOfflines = false)
     {
@@ -243,7 +217,7 @@ class rex_clang
      *
      * @param bool $ignoreOfflines
      *
-     * @return self[]
+     * @return array<int, self>
      */
     public static function getAll($ignoreOfflines = false)
     {
@@ -260,6 +234,7 @@ class rex_clang
 
     /**
      * Loads the cache if not already loaded.
+     * @return void
      */
     private static function checkCache()
     {
@@ -292,6 +267,7 @@ class rex_clang
 
     /**
      * Resets the intern cache of this class.
+     * @return void
      */
     public static function reset()
     {

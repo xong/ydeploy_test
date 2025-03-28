@@ -27,26 +27,26 @@ class rex_metainfo_table_manager
     public const FIELD_TIME = 13;
     public const FIELD_COUNT = 13;
 
-    private $tableName;
+    /** @param positive-int $DBID */
+    public function __construct(
+        private string $tableName,
+        private int $DBID = 1,
+    ) {}
+
     /**
-     * @psalm-var positive-int
-     *
-     * @var int
+     * @return string
      */
-    private $DBID;
-
-    public function __construct($tableName, $DBID = 1)
-    {
-        $this->tableName = $tableName;
-        $this->DBID = $DBID;
-    }
-
     public function getTableName()
     {
         return $this->tableName;
     }
 
     /**
+     * @param string $name
+     * @param string $type
+     * @param int|null $length
+     * @param string|null $default
+     * @param bool $nullable
      * @return bool
      */
     public function addColumn($name, $type, $length, $default = null, $nullable = true)
@@ -57,10 +57,11 @@ class rex_metainfo_table_manager
         $qry .= $sql->escapeIdentifier($name);
 
         if (!ctype_alpha($type)) {
-            throw new InvalidArgumentException('Invalid column type "'.$type.'"');
+            throw new InvalidArgumentException('Invalid column type "' . $type . '"');
         }
         /** @psalm-taint-escape sql */
-        $qry .= ' ' . $type;
+        $addType = ' ' . $type;
+        $qry .= $addType;
 
         if (0 != $length) {
             $qry .= '(' . (int) $length . ')';
@@ -71,19 +72,25 @@ class rex_metainfo_table_manager
             $qry .= ' DEFAULT ' . $sql->escape($default);
         }
 
-        if (true !== $nullable) {
+        if (!$nullable) {
             $qry .= ' NOT NULL';
         }
 
         try {
             $sql->setQuery($qry);
             return true;
-        } catch (rex_sql_exception $e) {
+        } catch (rex_sql_exception) {
             return false;
         }
     }
 
     /**
+     * @param string $oldname
+     * @param string $name
+     * @param string $type
+     * @param int|null $length
+     * @param string|null $default
+     * @param bool $nullable
      * @return bool
      */
     public function editColumn($oldname, $name, $type, $length, $default = null, $nullable = true)
@@ -94,10 +101,11 @@ class rex_metainfo_table_manager
         $qry .= $sql->escapeIdentifier($oldname) . ' ' . $sql->escapeIdentifier($name);
 
         if (!ctype_alpha($type)) {
-            throw new InvalidArgumentException('Invalid column type "'.$type.'"');
+            throw new InvalidArgumentException('Invalid column type "' . $type . '"');
         }
         /** @psalm-taint-escape sql */
-        $qry .= ' ' . $type;
+        $addType = ' ' . $type;
+        $qry .= $addType;
 
         if (0 != $length) {
             $qry .= '(' . (int) $length . ')';
@@ -108,19 +116,20 @@ class rex_metainfo_table_manager
             $qry .= ' DEFAULT ' . $sql->escape($default);
         }
 
-        if (true !== $nullable) {
+        if (!$nullable) {
             $qry .= ' NOT NULL';
         }
 
         try {
             $sql->setQuery($qry);
             return true;
-        } catch (rex_sql_exception $e) {
+        } catch (rex_sql_exception) {
             return false;
         }
     }
 
     /**
+     * @param string $name
      * @return bool
      */
     public function deleteColumn($name)
@@ -133,12 +142,13 @@ class rex_metainfo_table_manager
         try {
             $sql->setQuery($qry);
             return true;
-        } catch (rex_sql_exception $e) {
+        } catch (rex_sql_exception) {
             return false;
         }
     }
 
     /**
+     * @param string $name
      * @return bool
      */
     public function hasColumn($name)

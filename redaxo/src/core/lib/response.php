@@ -1,5 +1,8 @@
 <?php
 
+use Ramsey\Http\Range\Exception\HttpRangeException;
+use Ramsey\Http\Range\UnitFactory;
+
 /**
  * HTTP1.1 Client Cache Features.
  *
@@ -20,20 +23,15 @@ class rex_response
     public const HTTP_INTERNAL_ERROR = '500 Internal Server Error';
     public const HTTP_SERVICE_UNAVAILABLE = '503 Service Unavailable';
 
-    /** @var string */
-    private static $httpStatus = self::HTTP_OK;
-    /** @var bool */
-    private static $sentLastModified = false;
-    /** @var bool */
-    private static $sentEtag = false;
-    /** @var bool */
-    private static $sentContentType = false;
-    /** @var bool */
-    private static $sentCacheControl = false;
-    /** @var array */
-    private static $additionalHeaders = [];
-    /** @var array */
-    private static $preloadFiles = [];
+    private static string $httpStatus = self::HTTP_OK;
+    private static bool $sentLastModified = false;
+    private static bool $sentEtag = false;
+    private static bool $sentContentType = false;
+    private static bool $sentCacheControl = false;
+    private static bool $closeConnection = false;
+    private static array $additionalHeaders = [];
+    private static array $preloadFiles = [];
+    private static string $nonce = '';
 
     /**
      * Sets the HTTP Status code.
@@ -41,6 +39,7 @@ class rex_response
      * @param string $httpStatus
      *
      * @throws InvalidArgumentException
+     * @return void
      */
     public static function setStatus($httpStatus)
     {
@@ -62,20 +61,35 @@ class rex_response
     }
 
     /**
+     * Returns a request save NONCE für CSP Headers and Implemntations.
+     */
+    public static function getNonce(): string
+    {
+        if (!self::$nonce) {
+            self::$nonce = bin2hex(random_bytes(16));
+        }
+        return self::$nonce;
+    }
+
+    /**
      * Set a http response header. A existing header with the same name will be overridden.
      *
      * @param string $name
      * @param string $value
+     * @return void
      */
     public static function setHeader($name, $value)
     {
         self::$additionalHeaders[$name] = $value;
     }
 
+    /**
+     * @return void
+     */
     private static function sendAdditionalHeaders()
     {
         foreach (self::$additionalHeaders as $name => $value) {
-            header($name .': ' . $value);
+            header($name . ': ' . $value);
         }
     }
 
@@ -85,6 +99,7 @@ class rex_response
      * @param string $file
      * @param string $type
      * @param string $mimeType
+     * @return void
      */
     public static function preload($file, $type, $mimeType)
     {
@@ -95,10 +110,13 @@ class rex_response
         ];
     }
 
+    /**
+     * @return void
+     */
     private static function sendPreloadHeaders()
     {
         foreach (self::$preloadFiles as $preloadFile) {
-            header('Link: <' . $preloadFile['file'] . '>; rel=preload; as=' . $preloadFile['type'] . '; type="' . $preloadFile['mimeType'].'"; crossorigin; nopush', false);
+            header('Link: <' . $preloadFile['file'] . '>; rel=preload; as=' . $preloadFile['type'] . '; type="' . $preloadFile['mimeType'] . '"; crossorigin; nopush', false);
         }
     }
 
@@ -112,7 +130,7 @@ class rex_response
      *
      * @throws InvalidArgumentException
      *
-     * @psalm-return never-return
+     * @return never
      */
     public static function sendRedirect($url, $httpStatus = null)
     {
@@ -136,10 +154,11 @@ class rex_response
     /**
      * Sends a file to client.
      *
-     * @param string      $file               File path
-     * @param string      $contentType        Content type
-     * @param string      $contentDisposition Content disposition ("inline" or "attachment")
-     * @param null|string $filename           Custom Filename
+     * @param string $file File path
+     * @param string $contentType Content type
+     * @param string $contentDisposition Content disposition ("inline" or "attachment")
+     * @param string|null $filename Custom Filename
+     * @return void|never
      */
     public static function sendFile($file, $contentType, $contentDisposition = 'inline', $filename = null)
     {
@@ -180,7 +199,7 @@ class rex_response
         if ($rangeHeader) {
             try {
                 $filesize = filesize($file);
-                $unitFactory = new \Ramsey\Http\Range\UnitFactory();
+                $unitFactory = new UnitFactory();
                 $ranges = $unitFactory->getUnit(trim($rangeHeader), $filesize)->getRanges();
                 $handle = fopen($file, 'r');
                 if (is_resource($handle)) {
@@ -195,6 +214,12 @@ class rex_response
 
                         fseek($handle, $range->getStart());
                         while (ftell($handle) < $range->getEnd()) {
+                            // Abort on client disconnect.
+                            // With ignore_user_abort(true), the script is not aborted on client disconnect.
+                            // To avoid reading the entire stream and dismissing the data afterward, check between the chunks if the client is still there.
+                            if (1 === ignore_user_abort() && 1 === connection_aborted()) {
+                                break 2;
+                            }
                             echo fread($handle, $chunkSize);
                         }
                     }
@@ -203,7 +228,7 @@ class rex_response
                     // Send Error if file couldn't be read
                     header('HTTP/1.1 ' . self::HTTP_INTERNAL_ERROR);
                 }
-            } catch (\Ramsey\Http\Range\Exception\HttpRangeException $exception) {
+            } catch (HttpRangeException) {
                 header('HTTP/1.1 ' . self::HTTP_RANGE_NOT_SATISFIABLE);
             }
             return;
@@ -215,12 +240,13 @@ class rex_response
     /**
      * Sends a resource to the client.
      *
-     * @param string      $content            Content
-     * @param null|string $contentType        Content type
-     * @param null|int    $lastModified       HTTP Last-Modified Timestamp
-     * @param null|string $etag               HTTP Cachekey to identify the cache
-     * @param null|string $contentDisposition Content disposition ("inline" or "attachment")
-     * @param null|string $filename           Filename
+     * @param string $content Content
+     * @param string|null $contentType Content type
+     * @param int|null $lastModified HTTP Last-Modified Timestamp
+     * @param string|null $etag HTTP Cachekey to identify the cache
+     * @param string|null $contentDisposition Content disposition ("inline" or "attachment")
+     * @param string|null $filename Filename
+     * @return void
      */
     public static function sendResource($content, $contentType = null, $lastModified = null, $etag = null, $contentDisposition = null, $filename = null)
     {
@@ -239,8 +265,9 @@ class rex_response
      *
      * The page content can be modified by the Extension Point OUTPUT_FILTER
      *
-     * @param string $content      Content of page
-     * @param int    $lastModified HTTP Last-Modified Timestamp
+     * @param string $content Content of page
+     * @param int $lastModified HTTP Last-Modified Timestamp
+     * @return void
      */
     public static function sendPage($content, $lastModified = null)
     {
@@ -249,7 +276,7 @@ class rex_response
 
         $hasShutdownExtension = rex_extension::isRegistered('RESPONSE_SHUTDOWN');
         if ($hasShutdownExtension) {
-            header('Connection: close');
+            self::$closeConnection = true;
         }
 
         self::sendContent($content, null, $lastModified);
@@ -266,10 +293,11 @@ class rex_response
     /**
      * Sends content to the client.
      *
-     * @param string      $content      Content
-     * @param string|null $contentType  Content type
-     * @param int|null    $lastModified HTTP Last-Modified Timestamp
-     * @param string|null $etag         HTTP Cachekey to identify the cache
+     * @param string $content Content
+     * @param string|null $contentType Content type
+     * @param int|null $lastModified HTTP Last-Modified Timestamp
+     * @param string|null $etag HTTP Cachekey to identify the cache
+     * @return void
      */
     public static function sendContent($content, $contentType = null, $lastModified = null, $etag = null)
     {
@@ -313,17 +341,28 @@ class rex_response
         self::sendAdditionalHeaders();
         self::sendPreloadHeaders();
 
+        $finish = null;
+        if (function_exists('fastcgi_finish_request')) {
+            $finish = fastcgi_finish_request(...);
+        } elseif (function_exists('litespeed_finish_request')) {
+            $finish = litespeed_finish_request(...);
+        } elseif (self::$closeConnection) {
+            header('Connection: close');
+        }
+
         echo $content;
 
-        if (function_exists('fastcgi_finish_request')) {
-            fastcgi_finish_request();
+        if ($finish) {
+            $finish();
+        } elseif (!in_array(\PHP_SAPI, ['cli', 'phpdbg', 'embed'], true)) {
+            flush();
         }
     }
 
     /**
-     * @param mixed       $data         data to be json encoded and sent
-     * @param int|null    $lastModified HTTP Last-Modified Timestamp
-     * @param string|null $etag         HTTP Cachekey to identify the cache
+     * @param mixed $data data to be json encoded and sent
+     * @param int|null $lastModified HTTP Last-Modified Timestamp
+     * @param string|null $etag HTTP Cachekey to identify the cache
      */
     public static function sendJson($data, ?int $lastModified = null, ?string $etag = null): void
     {
@@ -332,6 +371,7 @@ class rex_response
 
     /**
      * Cleans all output buffers.
+     * @return void
      */
     public static function cleanOutputBuffers()
     {
@@ -344,6 +384,7 @@ class rex_response
      * Sends the content type header.
      *
      * @param string $contentType
+     * @return void
      */
     public static function sendContentType($contentType = null)
     {
@@ -353,6 +394,8 @@ class rex_response
 
     /**
      * Sends the cache control header.
+     * @param string $cacheControl
+     * @return void
      */
     public static function sendCacheControl($cacheControl = 'must-revalidate, proxy-revalidate, private, no-cache, max-age=0')
     {
@@ -365,7 +408,8 @@ class rex_response
      *
      * HTTP_IF_MODIFIED_SINCE feature
      *
-     * @param int $lastModified HTTP Last-Modified Timestamp
+     * @param int|null $lastModified HTTP Last-Modified Timestamp
+     * @return void|never
      */
     public static function sendLastModified($lastModified = null)
     {
@@ -395,6 +439,7 @@ class rex_response
      * HTTP_IF_NONE_MATCH feature
      *
      * @param string $cacheKey HTTP Cachekey to identify the cache
+     * @return void|never
      */
     public static function sendEtag($cacheKey)
     {
@@ -454,9 +499,9 @@ class rex_response
     // method inspired by https://github.com/symfony/symfony/blob/master/src/Symfony/Component/HttpFoundation/Cookie.php
 
     /**
-     * @param string      $name    The name of the cookie
-     * @param string|null $value   the value of the cookie, a empty value to delete the cookie
-     * @param array       $options Different cookie Options. Supported keys are:
+     * @param string $name The name of the cookie
+     * @param string|null $value the value of the cookie, a empty value to delete the cookie
+     * @param array{expires?: int|string|DateTimeInterface, path?: string, domain?: ?string, secure?: bool, httponly?: bool, samesite?: ?string, raw?: bool} $options Different cookie Options. Supported keys are:
      *                             "expires" int|string|DateTimeInterface The time the cookie expires
      *                             "path" string                          The path on the server in which the cookie will be available on
      *                             "domain" string|null                   The domain that the cookie is available to
@@ -464,9 +509,9 @@ class rex_response
      *                             "httponly" bool                        Whether the cookie will be made accessible only through the HTTP protocol
      *                             "samesite" string|null                 Whether the cookie will be available for cross-site requests
      *                             "raw" bool                             Whether the cookie value should be sent with no url encoding
-     * @psalm-param array{expires?: int|string|DateTimeInterface, path?: string, domain?: ?string, secure?: bool, httponly?: bool, samesite?: ?string, raw?: bool} $options
      *
      * @throws InvalidArgumentException
+     * @return void
      */
     public static function sendCookie($name, $value, array $options = [])
     {
@@ -507,20 +552,20 @@ class rex_response
             throw new InvalidArgumentException('The "sameSite" parameter value is not valid.');
         }
 
-        $str = 'Set-Cookie: '. ($raw ? $name : urlencode($name)).'=';
+        $str = 'Set-Cookie: ' . ($raw ? $name : urlencode($name)) . '=';
         if ('' === (string) $value) {
-            $str .= 'deleted; expires='.gmdate('D, d-M-Y H:i:s T', time() - 31536001).'; Max-Age=0';
+            $str .= 'deleted; expires=' . gmdate('D, d-M-Y H:i:s T', time() - 31_536_001) . '; Max-Age=0';
         } else {
             $str .= $raw ? $value : rawurlencode($value);
             if (0 !== $expire) {
-                $str .= '; expires='.gmdate('D, d-M-Y H:i:s T', $expire).'; Max-Age='.$maxAge;
+                $str .= '; expires=' . gmdate('D, d-M-Y H:i:s T', $expire) . '; Max-Age=' . $maxAge;
             }
         }
         if ($path) {
-            $str .= '; path='.$path;
+            $str .= '; path=' . $path;
         }
         if ($domain) {
-            $str .= '; domain='.$domain;
+            $str .= '; domain=' . $domain;
         }
         if ($secure) {
             $str .= '; secure';
@@ -529,7 +574,7 @@ class rex_response
             $str .= '; httponly';
         }
         if ($sameSite) {
-            $str .= '; samesite='.$sameSite;
+            $str .= '; samesite=' . $sameSite;
         }
 
         header($str, false);
@@ -540,14 +585,13 @@ class rex_response
      *
      * You might pass additional options in case the name is not unique or the cookie is not stored on the current domain.
      *
-     * @param string $name    The name of the cookie
-     * @param array  $options Different cookie Options. Supported keys are:
+     * @param string $name The name of the cookie
+     * @param array{path?: string, domain?: ?string, secure?: bool, httponly?: bool, samesite?: ?string} $options Different cookie Options. Supported keys are:
      *                        "path" string          The path on the server in which the cookie will be available on
      *                        "domain" string|null   The domain that the cookie is available to
      *                        "secure" bool          Whether the cookie should only be transmitted over a secure HTTPS connection from the client
      *                        "httponly" bool        Whether the cookie will be made accessible only through the HTTP protocol
      *                        "samesite" string|null Whether the cookie will be available for cross-site requests
-     * @psalm-param array{path?: string, domain?: ?string, secure?: bool, httponly?: bool, samesite?: ?string} $options
      *
      * @throws InvalidArgumentException
      */
@@ -572,11 +616,14 @@ class rex_response
         return md5(preg_replace('@<!--DYN-->.*<!--/DYN-->@U', '', $content));
     }
 
+    /**
+     * @return void
+     */
     public static function enforceHttps()
     {
         if (!rex_request::isHttps()) {
             self::setStatus(self::HTTP_MOVED_PERMANENTLY);
-            self::sendRedirect('https://'.$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI']);
+            self::sendRedirect('https://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI']);
         }
     }
 }

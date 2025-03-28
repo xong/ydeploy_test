@@ -12,10 +12,8 @@ class rex_config
 {
     /**
      * Flag to indicate if the config was initialized.
-     *
-     * @var bool
      */
-    private static $initialized = false;
+    private static bool $initialized = false;
 
     /**
      * path to the cache file.
@@ -26,31 +24,29 @@ class rex_config
 
     /**
      * Flag which indicates if database needs an update, because settings have changed.
-     *
-     * @var bool
      */
-    private static $changed = false;
+    private static bool $changed = false;
 
     /**
      * data read from database.
      *
      * @var array<string, array<string, mixed>>
      */
-    private static $data = [];
+    private static array $data = [];
 
     /**
      * data which is modified during this request.
      *
      * @var array<string, array<string, mixed>>
      */
-    private static $changedData = [];
+    private static array $changedData = [];
 
     /**
      * data which was deleted during this request.
      *
      * @var array<string, array<string, true>>
      */
-    private static $deletedData = [];
+    private static array $deletedData = [];
 
     /**
      * Method which saves an arbitary value associated to the given namespace and key.
@@ -58,15 +54,15 @@ class rex_config
      *
      * The set-method returns TRUE when an existing value was overridden, otherwise FALSE is returned.
      *
-     * @param string       $namespace The namespace e.g. an addon name
-     * @param string|array $key       The associated key or an associative array of key/value pairs
-     * @param mixed        $value     The value to save
+     * @param string $namespace The namespace e.g. an addon name
+     * @param string|array<string, mixed> $key The associated key or an associative array of key/value pairs
+     * @param mixed $value The value to save
      *
      * @throws InvalidArgumentException
      *
      * @return bool TRUE when an existing value was overridden, otherwise FALSE
      */
-    public static function set($namespace, $key, $value = null)
+    public static function set($namespace, $key, $value = null): bool
     {
         self::init();
 
@@ -112,17 +108,12 @@ class rex_config
      *
      * If no value can be found for the given key/namespace combination $default is returned.
      *
-     * @param string      $namespace The namespace e.g. an addon name
-     * @param string|null $key       The associated key
-     * @param mixed       $default   Default return value if no associated-value can be found
-     *
-     * @throws InvalidArgumentException
-     *
-     * @return mixed the value for $key or $default if $key cannot be found in the given $namespace
-     *
      * @template T as ?string
-     * @phpstan-template T
-     * @psalm-param T $key
+     * @param string $namespace The namespace e.g. an addon name
+     * @param T $key The associated key
+     * @param mixed $default Default return value if no associated-value can be found
+     * @throws InvalidArgumentException
+     * @return mixed the value for $key or $default if $key cannot be found in the given $namespace
      * @psalm-return (T is string ? mixed|null : array<string, mixed>)
      */
     public static function get($namespace, $key = null, $default = null)
@@ -140,24 +131,20 @@ class rex_config
         if (!is_string($key)) {
             throw new InvalidArgumentException('rex_config: expecting $key to be a string, ' . gettype($key) . ' given!');
         }
-
-        if (isset(self::$data[$namespace][$key])) {
-            return self::$data[$namespace][$key];
-        }
-        return $default;
+        return self::$data[$namespace][$key] ?? $default;
     }
 
     /**
      * Returns if the given key is set.
      *
-     * @param string      $namespace The namespace e.g. an addon name
-     * @param string|null $key       The associated key
+     * @param string $namespace The namespace e.g. an addon name
+     * @param string|null $key The associated key
      *
      * @throws InvalidArgumentException
      *
      * @return bool TRUE if the key is set, otherwise FALSE
      */
-    public static function has($namespace, $key = null)
+    public static function has($namespace, $key = null): bool
     {
         self::init();
 
@@ -180,13 +167,13 @@ class rex_config
      * Removes the setting associated with the given namespace and key.
      *
      * @param string $namespace The namespace e.g. an addon name
-     * @param string $key       The associated key
+     * @param string $key The associated key
      *
      * @throws InvalidArgumentException
      *
      * @return bool TRUE if the value was found and removed, otherwise FALSE
      */
-    public static function remove($namespace, $key)
+    public static function remove($namespace, $key): bool
     {
         self::init();
 
@@ -227,7 +214,7 @@ class rex_config
      *
      * @return bool TRUE if the namespace was found and removed, otherwise FALSE
      */
-    public static function removeNamespace($namespace)
+    public static function removeNamespace($namespace): bool
     {
         self::init();
 
@@ -250,7 +237,7 @@ class rex_config
     /**
      * Refreshes rex_config by reloading config from db.
      */
-    public static function refresh()
+    public static function refresh(): void
     {
         if (!self::$initialized) {
             self::init();
@@ -269,6 +256,7 @@ class rex_config
 
     /**
      * initilizes the rex_config class.
+     * @return void
      */
     protected static function init()
     {
@@ -295,6 +283,7 @@ class rex_config
 
     /**
      * load the config-data.
+     * @return void
      */
     protected static function load()
     {
@@ -312,7 +301,7 @@ class rex_config
      *
      * @return bool Returns TRUE, if the data was successfully loaded from the file-cache, otherwise FALSE
      */
-    private static function loadFromFile()
+    private static function loadFromFile(): bool
     {
         // delete cache-file, will be regenerated on next request
         if (is_file(self::$cacheFile)) {
@@ -325,7 +314,7 @@ class rex_config
     /**
      * load the config-data from database.
      */
-    private static function loadFromDb()
+    private static function loadFromDb(): void
     {
         $sql = rex_sql::factory();
         $sql->setQuery('SELECT * FROM ' . rex::getTablePrefix() . 'config');
@@ -339,7 +328,7 @@ class rex_config
     /**
      * save config to file-cache.
      */
-    private static function generateCache()
+    private static function generateCache(): void
     {
         if (rex_file::putCache(self::$cacheFile, self::$data) <= 0) {
             throw new rex_exception('rex-config: unable to write cache file ' . self::$cacheFile);
@@ -349,7 +338,7 @@ class rex_config
     /**
      * persists the config-data and truncates the file-cache.
      */
-    public static function save()
+    public static function save(): void
     {
         // save cache only if changes happened
         if (!self::$changed) {
@@ -374,7 +363,7 @@ class rex_config
     /**
      * save the config-data into the db.
      */
-    private static function saveToDb()
+    private static function saveToDb(): void
     {
         $sql = rex_sql::factory();
         // $sql->setDebug();
@@ -390,7 +379,7 @@ class rex_config
                     continue;
                 }
                 $params[] = $namespace;
-                $where[] = 'namespace = ? AND `key` IN ('.$sql->in(array_keys($nsData)).')';
+                $where[] = 'namespace = ? AND `key` IN (' . $sql->in(array_keys($nsData)) . ')';
             }
             if (count($where) > 0) {
                 $sql->setWhere(implode("\n    OR ", $where), $params);
@@ -404,7 +393,7 @@ class rex_config
 
             foreach (self::$changedData as $namespace => $nsData) {
                 foreach ($nsData as $key => $value) {
-                    $sql->addRecord(static function (rex_sql $record) use ($namespace, $key, $value) {
+                    $sql->addRecord(static function (rex_sql $record) use ($namespace, $key, $value): void {
                         $record->setValue('namespace', $namespace);
                         $record->setValue('key', $key);
                         $record->setValue('value', json_encode($value));

@@ -28,10 +28,8 @@
  */
 trait rex_factory_trait
 {
-    /**
-     * @var array<class-string<static>, class-string<static>>
-     */
-    private static $factoryClasses = [];
+    /** @var array<class-string<static>, class-string<static>> */
+    private static array $factoryClasses = [];
 
     /**
      * Sets the class for the factory.
@@ -40,6 +38,7 @@ trait rex_factory_trait
      * @psalm-param class-string<self> $subclass https://github.com/vimeo/psalm/issues/5535
      *
      * @throws InvalidArgumentException
+     * @return void
      */
     public static function setFactoryClass($subclass)
     {
@@ -50,7 +49,7 @@ trait rex_factory_trait
         if ($subclass != $calledClass && !is_subclass_of($subclass, $calledClass)) {
             throw new InvalidArgumentException('$class "' . $subclass . '" is expected to define a subclass of ' . $calledClass . '!');
         }
-        /** @psalm-suppress PropertyTypeCoercion */
+
         self::$factoryClasses[$calledClass] = $subclass; /** @phpstan-ignore-line */
     }
 
@@ -90,8 +89,8 @@ trait rex_factory_trait
     /**
      * Calls the factory class with the given method and arguments.
      *
-     * @param string $method    Method name
-     * @param array  $arguments Array of arguments
+     * @param string $method Method name
+     * @param array<mixed> $arguments Array of arguments
      *
      * @return mixed Result of the callback
      *

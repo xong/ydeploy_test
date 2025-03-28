@@ -7,18 +7,18 @@ class rex_be_navigation
 {
     use rex_factory_trait;
 
-    /** @psalm-var array<string, string> */
-    private $headlines = [];
+    /** @var array<string, string> */
+    private array $headlines = [];
 
-    /** @psalm-var array<string, int> */
-    private $prios = [
+    /** @var array<string, int> */
+    private array $prios = [
         'default' => 0,
         'system' => 10,
         'addons' => 20,
     ];
 
-    /** @psalm-var array<string, list> */
-    private $pages = [];
+    /** @var array<string, list<rex_be_page>> */
+    private array $pages = [];
 
     /**
      * @return static
@@ -29,6 +29,9 @@ class rex_be_navigation
         return new $class();
     }
 
+    /**
+     * @return void
+     */
     public function addPage(rex_be_page $page)
     {
         $blockName = 'default';
@@ -44,7 +47,7 @@ class rex_be_navigation
     }
 
     /**
-     * @return array
+     * @return list<array{navigation: list<array<string, mixed>>, headline: array{title: string}}>
      */
     public function getNavigation()
     {
@@ -62,13 +65,13 @@ class rex_be_navigation
             return $prio1 <=> $prio2;
         });
 
-        //$this->setActiveElements();
+        // $this->setActiveElements();
         $return = [];
         foreach ($this->pages as $block => $blockPages) {
             if (count($blockPages) > 0 && $blockPages[0] instanceof rex_be_page_main) {
-                uasort($blockPages, static function (rex_be_page_main $a, rex_be_page_main $b) {
-                    $aPrio = (int) $a->getPrio();
-                    $bPrio = (int) $b->getPrio();
+                uasort($blockPages, static function (rex_be_page $a, rex_be_page $b) {
+                    $aPrio = $a instanceof rex_be_page_main ? (int) $a->getPrio() : 0;
+                    $bPrio = $b instanceof rex_be_page_main ? (int) $b->getPrio() : 0;
                     if ($aPrio === $bPrio || ($aPrio <= 0 && $bPrio <= 0)) {
                         return strnatcasecmp($a->getTitle(), $b->getTitle());
                     }
@@ -100,9 +103,9 @@ class rex_be_navigation
     }
 
     /**
-     * @param rex_be_page[] $blockPages
+     * @param array<rex_be_page> $blockPages
      *
-     * @return array
+     * @return list<array<string, mixed>>
      */
     private function _getNavigation(array $blockPages)
     {
@@ -150,6 +153,9 @@ class rex_be_navigation
         return $navigation;
     }
 
+    /**
+     * @return void
+     */
     protected function setActiveElements()
     {
         foreach ($this->pages as $blockPages) {
@@ -172,6 +178,7 @@ class rex_be_navigation
     /**
      * @param string $block
      * @param string $headline
+     * @return void
      */
     public function setHeadline($block, $headline)
     {

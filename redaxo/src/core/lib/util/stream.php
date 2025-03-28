@@ -14,22 +14,18 @@
  *
  * @package redaxo\core
  *
- * @see http://www.php.net/manual/en/class.streamwrapper.php
+ * @see https://www.php.net/manual/en/class.streamwrapper.php
  */
 class rex_stream
 {
-    /** @var bool|null */
-    private static $useRealFiles;
+    private static ?bool $useRealFiles = null;
+    private static bool $registered = false;
 
-    /** @var bool */
-    private static $registered = false;
     /** @var array<string, string> */
-    private static $nextContent = [];
+    private static array $nextContent = [];
 
-    /** @var int */
-    private $position = 0;
-    /** @var string */
-    private $content = '';
+    private int $position = 0;
+    private string $content = '';
 
     /**
      * @var resource|null
@@ -40,7 +36,7 @@ class rex_stream
     /**
      * Prepares a new stream.
      *
-     * @param string $path    Virtual path which should describe the content (e.g. "template/1"), only relevant for error messages
+     * @param string $path Virtual path which should describe the content (e.g. "template/1"), only relevant for error messages
      * @param string $content Content which will be included
      *
      * @throws InvalidArgumentException
@@ -65,7 +61,7 @@ class rex_stream
 
         if (self::$useRealFiles) {
             $hash = substr(sha1($content), 0, 7);
-            $path = rex_path::coreCache('stream/'.$path.'/'.$hash);
+            $path = rex_path::coreCache('stream/' . $path . '/' . $hash);
 
             if (!is_file($path)) {
                 rex_file::put($path, $content);
@@ -88,7 +84,7 @@ class rex_stream
     }
 
     /**
-     * @see http://www.php.net/manual/en/streamwrapper.stream-open.php
+     * @see https://www.php.net/manual/en/streamwrapper.stream-open.php
      */
     public function stream_open(string $path, string $mode, int $options, ?string &$openedPath): bool
     {
@@ -98,13 +94,13 @@ class rex_stream
 
         $this->position = 0;
         $this->content = self::$nextContent[$path];
-        //unset(self::$nextContent[$path]);
+        // unset(self::$nextContent[$path]);
 
         return true;
     }
 
     /**
-     * @see http://www.php.net/manual/en/streamwrapper.stream-read.php
+     * @see https://www.php.net/manual/en/streamwrapper.stream-read.php
      */
     public function stream_read(int $count): string
     {
@@ -114,7 +110,7 @@ class rex_stream
     }
 
     /**
-     * @see http://www.php.net/manual/en/streamwrapper.stream-eof.php
+     * @see https://www.php.net/manual/en/streamwrapper.stream-eof.php
      */
     public function stream_eof(): bool
     {
@@ -122,7 +118,7 @@ class rex_stream
     }
 
     /**
-     * @see http://www.php.net/manual/en/streamwrapper.stream-seek.php
+     * @see https://www.php.net/manual/en/streamwrapper.stream-seek.php
      */
     public function stream_seek(int $offset, int $whence = SEEK_SET): bool
     {
@@ -142,7 +138,7 @@ class rex_stream
     }
 
     /**
-     * @see http://www.php.net/manual/en/streamwrapper.stream-set-option.php
+     * @see https://www.php.net/manual/en/streamwrapper.stream-set-option.php
      */
     public function stream_set_option(): bool
     {
@@ -150,7 +146,7 @@ class rex_stream
     }
 
     /**
-     * @see http://www.php.net/manual/en/streamwrapper.stream-tell.php
+     * @see https://www.php.net/manual/en/streamwrapper.stream-tell.php
      */
     public function stream_tell(): int
     {
@@ -158,7 +154,7 @@ class rex_stream
     }
 
     /**
-     * @see http://www.php.net/manual/en/streamwrapper.stream-flush.php
+     * @see https://www.php.net/manual/en/streamwrapper.stream-flush.php
      */
     public function stream_flush(): bool
     {
@@ -166,7 +162,8 @@ class rex_stream
     }
 
     /**
-     * @see http://www.php.net/manual/en/streamwrapper.stream-stat.php
+     * @see https://www.php.net/manual/en/streamwrapper.stream-stat.php
+     * @return null
      */
     public function stream_stat()
     {
@@ -174,7 +171,8 @@ class rex_stream
     }
 
     /**
-     * @see http://www.php.net/manual/en/streamwrapper.url-stat.php
+     * @see https://www.php.net/manual/en/streamwrapper.url-stat.php
+     * @return null
      */
     public function url_stat()
     {

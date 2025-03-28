@@ -8,8 +8,8 @@ final class rex_mediapool
     /**
      * Erstellt einen Filename der eindeutig ist für den Medienpool.
      *
-     * @param string $mediaName      Dateiname
-     * @param bool   $doSubindexing
+     * @param string $mediaName Dateiname
+     * @param bool $doSubindexing
      */
     public static function filename(string $mediaName, $doSubindexing = true): string
     {
@@ -60,7 +60,7 @@ final class rex_mediapool
         // FIXME move structure stuff into structure addon
         $values = [];
         for ($i = 1; $i < 21; ++$i) {
-            $values[] = 'value' . $i . ' REGEXP ' . $sql->escape('(^|[^[:alnum:]+_-])'.$filename);
+            $values[] = 'value' . $i . ' REGEXP ' . $sql->escape('(^|[^[:alnum:]+_-])' . $filename);
         }
 
         $files = [];
@@ -122,7 +122,9 @@ final class rex_mediapool
         foreach ($blockedExtensions as $blockedExtension) {
             // $blockedExtensions extensions are not allowed within filenames, to prevent double extension vulnerabilities:
             // -> some webspaces execute files named file.php.txt as php
-            if (str_contains($filename, '.'. $blockedExtension)) {
+            if (str_ends_with($filename, '.' . $blockedExtension) // Prüfe ob der String mit der verbotenen Endung endet
+                || str_ends_with($filename, '.' . $blockedExtension . '.' . $fileExt) // prüfe ob es keine doppelte Endung der Form *.php.ext gibt
+            ) {
                 return false;
             }
         }
@@ -134,13 +136,13 @@ final class rex_mediapool
     /**
      * Checks file against optional property `allowed_mime_types`.
      *
-     * @param string      $path     Path to the physical file
-     * @param null|string $filename Optional filename, will be used for extracting the file extension.
+     * @param string $path Path to the physical file
+     * @param string|null $filename Optional filename, will be used for extracting the file extension.
      *                              If not given, the extension is extracted from `$path`.
      */
     public static function isAllowedMimeType(string $path, ?string $filename = null): bool
     {
-        $allowedMimetypes = rex_addon::get('mediapool')->getProperty('allowed_mime_types');
+        $allowedMimetypes = self::getAllowedMimeTypes();
 
         if (!$allowedMimetypes) {
             return true;
@@ -189,5 +191,25 @@ final class rex_mediapool
     public static function getBlockedExtensions(): array
     {
         return rex_addon::get('mediapool')->getProperty('blocked_extensions');
+    }
+
+    /**
+     * Get global list of allowed mime types.
+     *
+     * @return array<string, list<string>> Mapping of file extensions to corresponding list of allowed mime types
+     */
+    public static function getAllowedMimeTypes(): array
+    {
+        return rex_addon::get('mediapool')->getProperty('allowed_mime_types', []);
+    }
+
+    /**
+     * Set global list of allowed mime types.
+     *
+     * @param array<string, list<string>> $mimeTypes Mapping of file extensions to corresponding list of allowed mime types
+     */
+    public static function setAllowedMimeTypes(array $mimeTypes): void
+    {
+        rex_addon::get('mediapool')->setProperty('allowed_mime_types', $mimeTypes);
     }
 }

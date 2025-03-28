@@ -7,10 +7,11 @@ $baseDir = dirname($vendorDir);
 
 return array(
     'voku\\helper\\' => array($vendorDir . '/voku/anti-xss/src/voku/helper'),
-    'voku\\' => array($vendorDir . '/voku/portable-ascii/src/voku', $vendorDir . '/voku/portable-utf8/src/voku'),
+    'voku\\' => array($vendorDir . '/voku/portable-utf8/src/voku', $vendorDir . '/voku/portable-ascii/src/voku'),
+    'lbuchs\\WebAuthn\\' => array($vendorDir . '/lbuchs/webauthn/src'),
+    'enshrined\\svgSanitize\\' => array($vendorDir . '/enshrined/svg-sanitize/src'),
     'Whoops\\' => array($vendorDir . '/filp/whoops/src/Whoops'),
-    'Symfony\\Polyfill\\Php81\\' => array($vendorDir . '/symfony/polyfill-php81'),
-    'Symfony\\Polyfill\\Php80\\' => array($vendorDir . '/symfony/polyfill-php80'),
+    'Symfony\\Polyfill\\Php83\\' => array($vendorDir . '/symfony/polyfill-php83'),
     'Symfony\\Contracts\\Service\\' => array($vendorDir . '/symfony/service-contracts'),
     'Symfony\\Component\\Yaml\\' => array($vendorDir . '/symfony/yaml'),
     'Symfony\\Component\\VarDumper\\' => array($vendorDir . '/symfony/var-dumper'),
@@ -19,7 +20,7 @@ return array(
     'Symfony\\Component\\Console\\' => array($vendorDir . '/symfony/console'),
     'Ramsey\\Http\\Range\\' => array($vendorDir . '/ramsey/http-range/src'),
     'Ramsey\\Collection\\' => array($vendorDir . '/ramsey/collection/src'),
-    'Psr\\Log\\' => array($vendorDir . '/psr/log/Psr/Log'),
+    'Psr\\Log\\' => array($vendorDir . '/psr/log/src'),
     'Psr\\Http\\Message\\' => array($vendorDir . '/psr/http-message/src'),
     'Psr\\Container\\' => array($vendorDir . '/psr/container/src'),
 );

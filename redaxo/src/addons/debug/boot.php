@@ -1,10 +1,12 @@
 <?php
 
+use Clockwork\Clockwork;
+
 if (!rex_debug_clockwork::isRexDebugEnabled() || 'debug' === rex_get(rex_api_function::REQ_CALL_PARAM)) {
     return;
 }
 
-if (rex::isBackend() && 'debug' === rex_request::get('page') && rex::getUser() && rex::getUser()->isAdmin()) {
+if (rex::isBackend() && 'debug' === rex_request::get('page') && rex::getUser()?->isAdmin()) {
     $index = file_get_contents(rex_addon::get('debug')->getAssetsPath('clockwork/index.html'));
 
     $editor = rex_editor::factory();
@@ -21,14 +23,16 @@ if (rex::isBackend() && 'debug' === rex_request::get('page') && rex::getUser() &
     }
 
     // prepend backend folder
-    $apiUrl = dirname($_SERVER['REQUEST_URI']).'/'.rex_debug_clockwork::getClockworkApiUrl();
+    $apiUrl = dirname($_SERVER['REQUEST_URI']) . '/' . rex_debug_clockwork::getClockworkApiUrl();
     $appearance = rex::getTheme();
     if (!$appearance) {
         $appearance = 'auto';
     }
 
+    $nonce = rex_response::getNonce();
+
     $injectedScript = <<<EOF
-        <script>
+        <script nonce="$nonce">
             let store;
             try {
                 store = JSON.parse(localStorage.getItem('clockwork'));
@@ -52,7 +56,7 @@ if (rex::isBackend() && 'debug' === rex_request::get('page') && rex::getUser() &
         </script>
         EOF;
 
-    $index = str_replace('<body>', '<body>'.$injectedScript, $index);
+    $index = str_replace('<body>', '<body>' . $injectedScript, $index);
     rex_response::sendPage($index);
     exit;
 }
@@ -64,7 +68,7 @@ rex_logger::setFactoryClass(rex_logger_debug::class);
 rex_api_function::setFactoryClass(rex_api_function_debug::class);
 
 rex_response::setHeader('X-Clockwork-Id', rex_debug_clockwork::getInstance()->getRequest()->id);
-rex_response::setHeader('X-Clockwork-Version', \Clockwork\Clockwork::VERSION);
+rex_response::setHeader('X-Clockwork-Version', Clockwork::VERSION);
 
 rex_response::setHeader('X-Clockwork-Path', rex_debug_clockwork::getClockworkApiUrl());
 
@@ -84,29 +88,19 @@ $shutdownFn = static function () {
     $req = $clockwork->getRequest();
 
     if (rex::isBackend()) {
-        $req->controller = 'page: '.rex_be_controller::getCurrentPage();
+        $req->controller = 'page: ' . rex_be_controller::getCurrentPage();
     } elseif (rex_plugin::get('structure', 'content')->isAvailable()) {
-        $req->controller = 'article: '.rex_article::getCurrentId().'; clang: '.rex_clang::getCurrent()->getCode();
+        $req->controller = 'article: ' . rex_article::getCurrentId() . '; clang: ' . rex_clang::getCurrent()->getCode();
     }
 
     foreach ($req->databaseQueries as $query) {
-        switch (rex_sql::getQueryType($query['query'])) {
-            case 'SELECT':
-                $req->databaseSelects++;
-                break;
-            case 'INSERT':
-                $req->databaseInserts++;
-                break;
-            case 'UPDATE':
-                $req->databaseUpdates++;
-                break;
-            case 'DELETE':
-                $req->databaseDeletes++;
-                break;
-            default:
-                $req->databaseOthers++;
-                break;
-        }
+        match (rex_sql::getQueryType($query['query'])) {
+            'SELECT' => $req->databaseSelects++,
+            'INSERT' => $req->databaseInserts++,
+            'UPDATE' => $req->databaseUpdates++,
+            'DELETE' => $req->databaseDeletes++,
+            default => $req->databaseOthers++,
+        };
         if ($query['duration'] > 20) {
             ++$req->databaseSlowQueries;
         }
@@ -143,7 +137,7 @@ if ('cli' === PHP_SAPI) {
                 array_diff($input->getArguments(), $command->getDefinition()->getArgumentDefaults()),
                 array_diff($input->getOptions(), $command->getDefinition()->getOptionDefaults()),
                 $command->getDefinition()->getArgumentDefaults(),
-                $command->getDefinition()->getOptionDefaults()
+                $command->getDefinition()->getOptionDefaults(),
                 // $output->fetch()
             )
         ->storeRequest();
@@ -151,7 +145,7 @@ if ('cli' === PHP_SAPI) {
 } else {
     register_shutdown_function(static function () use ($shutdownFn) {
         // don't track preflight requests
-        if ('/__clockwork/latest' === $_SERVER['REQUEST_URI']) {
+        if (in_array($_SERVER['REQUEST_URI'], ['/__clockwork/latest', '/assets/addons/debug/clockwork/manifest.json'], true)) {
             return;
         }
 

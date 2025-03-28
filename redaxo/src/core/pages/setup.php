@@ -1,9 +1,5 @@
 <?php
 
-/**
- * @package redaxo5
- */
-
 $step = rex_request('step', 'int', 1);
 $lang = rex_request('lang', 'string');
 $func = rex_request('func', 'string');
@@ -15,7 +11,7 @@ $context = rex_setup::getContext();
 $cancelSetupBtn = '';
 if (!rex_setup::isInitialSetup()) {
     $cancelSetupBtn = '
-    <style>
+    <style nonce="' . rex_response::getNonce() . '">
         .rex-cancel-setup {
             position: absolute;
             top: 7px;
@@ -33,7 +29,7 @@ if (!rex_setup::isInitialSetup()) {
             }
         }
     </style>
-    <a href="'.$context->getUrl(['func' => 'abort']).'" data-confirm="Cancel Setup?" class="btn btn-delete rex-cancel-setup">'.rex_i18n::msg('setup_cancel').'</a>';
+    <a href="' . $context->getUrl(['func' => 'abort']) . '" data-confirm="' . rex_i18n::msg('setup_cancel') . '?" class="btn btn-delete rex-cancel-setup">' . rex_i18n::msg('setup_cancel') . '</a>';
 
     if ('abort' === $func) {
         rex_setup::markSetupCompleted();
@@ -60,7 +56,7 @@ if (count($errors) > 0) {
         $errorArray[] = rex_view::error($error);
     }
 } else {
-    $successArray[] = rex_i18n::msg('setup_208');
+    $successArray[] = rex_i18n::msg('setup_208', PHP_VERSION);
 }
 
 $res = rex_setup::checkFilesystem();
@@ -96,7 +92,7 @@ $errorArray = [];
 $configFile = rex_path::coreData('config.yml');
 $config = array_merge(
     rex_file::getConfig(rex_path::core('default.config.yml')),
-    rex_file::getConfig($configFile)
+    rex_file::getConfig($configFile),
 );
 
 if (isset($_SERVER['HTTP_HOST']) && 'https://www.redaxo.org/' == $config['server']) {
@@ -146,7 +142,7 @@ if ($step > 3) {
         }
         try {
             rex::setProperty($key, $config[$key]);
-        } catch (InvalidArgumentException $e) {
+        } catch (InvalidArgumentException) {
             $errorArray[] = rex_view::error(rex_i18n::msg($key . '_invalid'));
         }
     }
@@ -317,7 +313,7 @@ if (6 === $step) {
                 $user->setValue('status', '1');
                 try {
                     $user->insert();
-                } catch (rex_sql_exception $e) {
+                } catch (rex_sql_exception) {
                     $errors[] = rex_view::error(rex_i18n::msg('setup_504'));
                 }
             }

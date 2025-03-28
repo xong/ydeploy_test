@@ -1,5 +1,5 @@
 package: structure/content
-version: '2.14.1'
+version: '2.17.4'
 author: Markus Staab
 supportpage: https://github.com/redaxo/redaxo
 
@@ -20,6 +20,7 @@ pages:
         block: system
         prio: 30
         perm: admin
+        live_mode: false
         pjax: true
         icon: rex-icon rex-icon-template
     modules:
@@ -28,6 +29,7 @@ pages:
         block: system
         prio: 40
         perm: admin
+        live_mode: false
         pjax: true
         icon: rex-icon rex-icon-module
         subpages:
@@ -35,7 +37,7 @@ pages:
             actions: { title: translate:actions }
 
 requires:
-    redaxo: ^5.13.0
+    redaxo: ^5.15.0
 
 conflicts:
     packages:

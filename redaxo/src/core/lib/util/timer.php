@@ -10,21 +10,20 @@
 class rex_timer
 {
     public const SEC = 1;
-    public const MILLISEC = 1000;
-    public const MICROSEC = 1000000;
+    public const MILLISEC = 1_000;
+    public const MICROSEC = 1_000_000;
 
     /**
      * @internal
      *
-     * @var array
-     * @psalm-var array<string, array{sum: mixed, timings: list<array{start: float, end: float}>}>
+     * @var array<string, array{sum: mixed, timings: list<array{start: float, end: float}>}>
      */
     public static $serverTimings = [];
 
     /** @var float */
     private $start;
 
-    /** @var null|float */
+    /** @var float|null */
     private $duration;
 
     /**
@@ -87,6 +86,7 @@ class rex_timer
 
     /**
      * Resets the timer.
+     * @return void
      */
     public function reset()
     {
@@ -95,6 +95,7 @@ class rex_timer
 
     /**
      * Stops the timer.
+     * @return void
      */
     public function stop()
     {
@@ -119,7 +120,7 @@ class rex_timer
      * Returns the formatted time difference.
      *
      * @param int $precision Factor which will be multiplied, for convertion into different units (e.g. 1000 for milli,...)
-     * @param int $decimals  Number of decimals points
+     * @param int $decimals Number of decimals points
      *
      * @return string Formatted time difference
      */

@@ -10,22 +10,18 @@
 
 class rex_cronjob_manager_sql
 {
-    /** @var rex_sql */
-    private $sql;
-    /** @var rex_cronjob_manager|null */
-    private $manager;
+    private rex_sql $sql;
 
-    private function __construct(rex_cronjob_manager $manager = null)
-    {
+    private function __construct(
+        private ?rex_cronjob_manager $manager = null,
+    ) {
         $this->sql = rex_sql::factory();
-        // $this->sql->setDebug();
-        $this->manager = $manager;
     }
 
     /**
      * @return self
      */
-    public static function factory(rex_cronjob_manager $manager = null)
+    public static function factory(?rex_cronjob_manager $manager = null)
     {
         return new self($manager);
     }
@@ -51,6 +47,7 @@ class rex_cronjob_manager_sql
 
     /**
      * @param string $message
+     * @return void
      */
     public function setMessage($message)
     {
@@ -106,7 +103,7 @@ class rex_cronjob_manager_sql
         try {
             $this->sql->update();
             $success = true;
-        } catch (rex_sql_exception $e) {
+        } catch (rex_sql_exception) {
             $success = false;
         }
         $this->saveNextTime();
@@ -125,7 +122,7 @@ class rex_cronjob_manager_sql
         try {
             $this->sql->update();
             return true;
-        } catch (rex_sql_exception $e) {
+        } catch (rex_sql_exception) {
             return false;
         }
     }
@@ -141,7 +138,7 @@ class rex_cronjob_manager_sql
         try {
             $this->sql->delete();
             $success = true;
-        } catch (rex_sql_exception $e) {
+        } catch (rex_sql_exception) {
             $success = false;
         }
         $this->saveNextTime();
@@ -149,7 +146,8 @@ class rex_cronjob_manager_sql
     }
 
     /**
-     * @param null|callable(string,bool,string):void $callback Callback is called after every job execution (params: job name, success status, message)
+     * @param callable(string,bool,string):void|null $callback Callback is called after every job execution (params: job name, success status, message)
+     * @return void
      */
     public function check(?callable $callback = null)
     {
@@ -161,7 +159,7 @@ class rex_cronjob_manager_sql
 
         $query = '
             SELECT    id, name, type, parameters, `interval`, execution_moment
-            FROM      '.rex::getTable('cronjob').'
+            FROM      ' . rex::getTable('cronjob') . '
             WHERE     status = 1
                 AND   execution_start < ?
                 AND   environment LIKE ?
@@ -177,7 +175,7 @@ class rex_cronjob_manager_sql
             $minExecutionStartDiff = 2 * ((int) ini_get('max_execution_time') ?: 60 * 60);
         }
 
-        $jobs = $sql->getArray($query, [rex_sql::datetime(time() - $minExecutionStartDiff), '%|' .$env. '|%', rex_sql::datetime()]);
+        $jobs = $sql->getArray($query, [rex_sql::datetime(time() - $minExecutionStartDiff), '%|' . $env . '|%', rex_sql::datetime()]);
 
         if (!$jobs) {
             $this->saveNextTime();
@@ -196,8 +194,11 @@ class rex_cronjob_manager_sql
                     continue;
                 }
 
+                /** @psalm-taint-escape callable */ // It is intended that the class name is coming from database
+                $type = $job['type'];
+
                 $manager = $this->getManager();
-                $manager->setCronjob(rex_cronjob::factory($job['type']));
+                $manager->setCronjob(rex_cronjob::factory($type));
                 $manager->log(false, 0 != connection_status() ? 'Timeout' : 'Unknown error');
                 $this->setNextTime($job['id'], $job['interval'], true);
             }
@@ -268,7 +269,11 @@ class rex_cronjob_manager_sql
     private function tryExecuteJob(array $job, $log = true, $resetExecutionStart = false)
     {
         $params = $job['parameters'] ? json_decode($job['parameters'], true) : [];
-        $cronjob = rex_cronjob::factory($job['type']);
+
+        /** @psalm-taint-escape callable */ // It is intended that the class name is coming from database
+        $type = $job['type'];
+
+        $cronjob = rex_cronjob::factory($type);
 
         $this->setNextTime($job['id'], $job['interval'], $resetExecutionStart);
 
@@ -294,7 +299,7 @@ class rex_cronjob_manager_sql
                 WHERE   id = ?
             ', [$nexttime, $id]);
             $success = true;
-        } catch (rex_sql_exception $e) {
+        } catch (rex_sql_exception) {
             $success = false;
         }
         $this->saveNextTime();
@@ -372,9 +377,9 @@ class rex_cronjob_manager_sql
         $validateTime();
 
         if (
-            !$isValid($interval['days'], $date->format('j')) ||
-            !$isValid($interval['weekdays'], $date->format('w')) ||
-            !$isValid($interval['months'], $date->format('n'))
+            !$isValid($interval['days'], $date->format('j'))
+            || !$isValid($interval['weekdays'], $date->format('w'))
+            || !$isValid($interval['months'], $date->format('n'))
         ) {
             $date->setTime(0, 0, 0);
             $validateTime();

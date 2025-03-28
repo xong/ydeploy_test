@@ -10,6 +10,8 @@
  */
 class rex_log_file implements Iterator
 {
+    use rex_factory_trait;
+
     /** @var string */
     private $path;
 
@@ -38,8 +40,9 @@ class rex_log_file implements Iterator
     private $bufferPos;
 
     /**
-     * @param string   $path        File path
+     * @param string $path File path
      * @param int|null $maxFileSize Maximum file size
+     * @deprecated since 5.17.0, use `rex_log_file::factory` instead
      */
     public function __construct($path, $maxFileSize = null)
     {
@@ -53,10 +56,17 @@ class rex_log_file implements Iterator
         $this->file = fopen($path, 'a+');
     }
 
+    public static function factory(string $path, ?int $maxFileSize = null): static
+    {
+        $class = static::getFactoryClass();
+        return new $class($path, $maxFileSize);
+    }
+
     /**
      * Adds a log entry.
      *
      * @param list<string|int> $data Log data
+     * @return void
      */
     public function add(array $data)
     {
@@ -83,8 +93,7 @@ class rex_log_file implements Iterator
     #[ReturnTypeWillChange]
     public function next()
     {
-        /** @var int $bufferSize */
-        static $bufferSize = 500;
+        $bufferSize = 500;
 
         if ($this->pos < 0) {
             // position is before file start -> look for next file
@@ -159,18 +168,12 @@ class rex_log_file implements Iterator
         return $this->key;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     #[ReturnTypeWillChange]
     public function valid()
     {
         return !empty($this->currentLine);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     #[ReturnTypeWillChange]
     public function rewind()
     {
@@ -190,6 +193,10 @@ class rex_log_file implements Iterator
      */
     public static function delete($path)
     {
+        if ($factoryClass = static::getExplicitFactoryClass()) {
+            return $factoryClass::delete($path);
+        }
+
         return rex_file::delete($path) && rex_file::delete($path . '.2');
     }
 }
@@ -203,19 +210,17 @@ class rex_log_file implements Iterator
  */
 class rex_log_entry
 {
-    public const DATE_FORMAT = 'Y-m-d H:i:s';
+    public const DATE_FORMAT = 'Y-m-d\TH:i:sP';
 
-    /** @var int */
-    private $timestamp;
+    private int $timestamp;
 
     /** @var list<string> */
-    private $data;
+    private array $data;
 
     /**
-     * @param int $timestamp Timestamp
      * @param list<string|int> $data Log data
      */
-    public function __construct($timestamp, array $data)
+    public function __construct(int $timestamp, array $data)
     {
         $this->timestamp = $timestamp;
         $this->data = array_map('strval', $data);

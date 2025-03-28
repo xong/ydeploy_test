@@ -2,11 +2,9 @@
 
 /**
  * Layout Kopf des Backends.
- *
- * @package redaxo5
  */
 
-$curPage = rex_be_controller::getCurrentPageObject();
+$curPage = rex_be_controller::requireCurrentPageObject();
 $user = rex::getUser();
 
 if (rex_request::isPJAXRequest()) {
@@ -28,10 +26,9 @@ $bodyAttr = [];
 $bodyId = rex::isSetup() ? 'setup' : rex_string::normalize(rex_be_controller::getCurrentPage(), '-', ' ');
 
 $bodyAttr['id'] = ['rex-page-' . $bodyId];
-$bodyAttr['onunload'] = ['closeAll();'];
 
 $bodyAttr['class'] = ['rex-is-logged-out'];
-if (rex::getUser()) {
+if ($user) {
     $bodyAttr['class'] = ['rex-is-logged-in'];
 }
 if (rex::isDebugMode()) {
@@ -72,7 +69,7 @@ $hasNavigation = $curPage->hasNavigation();
 
 $metaItems = [];
 if ($user && $hasNavigation) {
-    if (rex::isSafeMode()) {
+    if (rex::isSafeMode() && $user->isAdmin()) {
         $item = [];
         $item['title'] = rex_i18n::msg('safemode_deactivate');
         $item['href'] = rex_url::backendController(['safemode' => 0]);
@@ -90,7 +87,7 @@ if ($user && $hasNavigation) {
     $item = [];
     $item['title'] = '<span class="text-muted">' . rex_i18n::msg('logged_in_as') . '</span> <a class="rex-username" href="' . rex_url::backendPage('profile') . '" title="' . rex_i18n::msg('profile_title') . '"><i class="rex-icon rex-icon-user"></i> ' . rex_escape($userName) . '</a>';
     if ($impersonator) {
-        $item['title'] .= ' (<i class="rex-icon rex-icon-user"></i> '.rex_escape($impersonator).')';
+        $item['title'] .= ' (<i class="rex-icon rex-icon-user"></i> ' . rex_escape($impersonator) . ')';
     }
     $metaItems[] = $item;
     unset($item);
@@ -154,7 +151,7 @@ if ($user && $hasNavigation) {
     }
 }
 
-/* Setup Navigation ***********************************************************/
+/* Setup Navigation ********************************************************** */
 if ('setup' == rex_be_controller::getCurrentPagePart(1)) {
     $step = rex_request('step', 'float');
     $lang = rex_request('lang', 'string', '');
@@ -199,7 +196,7 @@ if ('setup' == rex_be_controller::getCurrentPagePart(1)) {
     $navigation = $fragment->parse('core/navigations/main.php');
 }
 
-/* PJAX Footer Header ***********************************************************/
+/* PJAX Footer Header ********************************************************** */
 if (!rex_request::isPJAXContainer('#rex-js-page-container')) {
     $fragment = new rex_fragment();
     $fragment->setVar('pageTitle', rex_be_controller::getPageTitle());

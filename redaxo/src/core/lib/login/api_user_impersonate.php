@@ -8,7 +8,7 @@
 class rex_api_user_impersonate extends rex_api_function
 {
     /**
-     * @psalm-return never-return
+     * @return never
      */
     public function execute()
     {
@@ -18,8 +18,6 @@ class rex_api_user_impersonate extends rex_api_function
             rex::getProperty('login')->depersonate();
 
             rex_response::sendRedirect(rex_url::backendPage('users/users', [], false));
-
-            exit;
         }
 
         $user = rex::requireUser();
@@ -30,8 +28,6 @@ class rex_api_user_impersonate extends rex_api_function
         rex::getProperty('login')->impersonate((int) $impersonate);
 
         rex_response::sendRedirect(rex_url::backendController([], false));
-
-        exit;
     }
 
     protected function requiresCsrfProtection()

@@ -19,10 +19,8 @@ class rex_editor
 
     // see https://github.com/filp/whoops/blob/master/docs/Open%20Files%20In%20An%20Editor.md
     // keep this list in sync with the array in getSupportedEditors() excluding xdebug
-    /**
-     * @var array<self::EDITOR_*, string>
-     */
-    private $editors = [
+    /** @var array<self::EDITOR_*, string> */
+    private array $editors = [
         self::EDITOR_ATOM => 'atom://core/open/file?filename=%f&line=%l',
         self::EDITOR_EMACS => 'emacs://open?url=file://%f&line=%l',
         self::EDITOR_IDEA => 'idea://open?file=%f&line=%l',
@@ -34,9 +32,7 @@ class rex_editor
     ];
 
     // we expect instantiation via factory()
-    private function __construct()
-    {
-    }
+    private function __construct() {}
 
     /**
      * Creates a rex_editor instance.
@@ -50,6 +46,9 @@ class rex_editor
     }
 
     /**
+     * @param string $filePath
+     * @param int|numeric-string $line
+     *
      * @return string|null
      */
     public function getUrl($filePath, $line)
@@ -70,12 +69,12 @@ class rex_editor
         } elseif (isset($this->editors[$editor]) || 'xdebug' === $editor) {
             if ('xdebug' === $editor) {
                 // if xdebug is not enabled, use `get_cfg_var` to get the value directly from php.ini
-                $editorUrl = ini_get('xdebug.file_link_format') ?: get_cfg_var('xdebug.file_link_format');
+                $editorUrl = ini_get('xdebug.file_link_format') ?: rex_type::string(get_cfg_var('xdebug.file_link_format'));
             } else {
                 $editorUrl = $this->editors[$editor];
             }
 
-            $editorUrl = str_replace('%l', $line, $editorUrl);
+            $editorUrl = str_replace('%l', (string) $line, $editorUrl);
             $editorUrl = str_replace('%f', $filePath, $editorUrl);
         }
 
@@ -125,6 +124,6 @@ class rex_editor
     {
         $path = array_key_exists('editor_basepath', $_COOKIE) ? $_COOKIE['editor_basepath'] : rex::getProperty('editor_basepath');
 
-        return $path ? rtrim($path, '\\/').DIRECTORY_SEPARATOR : null;
+        return $path ? rtrim($path, '\\/') . DIRECTORY_SEPARATOR : null;
     }
 }

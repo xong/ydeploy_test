@@ -4,8 +4,6 @@
  * Addon Framework Classes.
  *
  * @author markus[dot]staab[at]redaxo[dot]de Markus Staab
- *
- * @package redaxo5
  */
 
 $addon = rex_addon::get('phpmailer');
@@ -24,6 +22,7 @@ if ('' != rex_post('btn_save', 'string') || '' != rex_post('btn_check', 'string'
         ['detour_mode', 'boolean'],
         ['confirmto', 'string'],
         ['bcc', 'string'],
+        ['returnto', 'string'],
         ['mailer', 'string'],
         ['host', 'string'],
         ['port', 'int'],
@@ -211,6 +210,11 @@ $n['field'] = '<input class="form-control" id="phpmailer-bcc" type="email" name=
 $formElements[] = $n;
 
 $n = [];
+$n['label'] = '<label for="phpmailer-returnto">' . $addon->i18n('returnto_email') . '</label>';
+$n['field'] = '<input class="form-control" id="phpmailer-returnto" type="email" name="settings[returnto]" placeholder="returnto@example.tld" value="' . rex_escape($addon->getConfig('returnto')) . '" />';
+$formElements[] = $n;
+
+$n = [];
 $n['label'] = '<label for="phpmailer-mailer">' . $addon->i18n('mailertype') . '</label>';
 $n['field'] = $selMailer->get();
 $formElements[] = $n;
@@ -314,7 +318,7 @@ $formElements[] = $n;
 
 $n = [];
 $n['label'] = '<label for="phpmailer-smtp_debug">' . $addon->i18n('smtp_debug') . '</label>';
-$n['field'] = $selDebug->get().'<p class="help-block rex-note"> ' . $addon->i18n('smtp_debug_info').'</p>';
+$n['field'] = $selDebug->get() . '<p class="help-block rex-note"> ' . $addon->i18n('smtp_debug_info') . '</p>';
 $formElements[] = $n;
 
 $n = [];
@@ -325,7 +329,7 @@ $formElements[] = $n;
 $n = [];
 $n['label'] = '<label for="phpmailer-archive">' . $addon->i18n('archive') . '</label>';
 $n['field'] = $selArchive->get();
-$n['note'] = rex_i18n::rawMsg('phpmailer_archive_info', rex_mailer::logFolder(), '...'.substr(rex_mailer::logFolder(), -30));
+$n['note'] = rex_i18n::rawMsg('phpmailer_archive_info', rex_mailer::logFolder(), '...' . substr(rex_mailer::logFolder(), -30));
 $formElements[] = $n;
 
 if (is_dir(rex_mailer::logFolder())) {
@@ -370,7 +374,7 @@ echo '
         ' . $content . '
     </form>';
 ?>
-<script>
+<script nonce="<?= rex_response::getNonce() ?>">
     $('#smtpsettings').toggle(
         $('#phpmailer-mailer').find("option[value='smtp']").is(":checked")
     );

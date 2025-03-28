@@ -1,9 +1,5 @@
 <?php
 
-/**
- * @package redaxo5
- */
-
 global $rexUserLoginmessage;
 
 $rexUserLogin = rex_post('rex_user_login', 'string');
@@ -17,7 +13,7 @@ $content .= $fragment->parse('core/login_branding.php');
 
 $js = '';
 if ('' != $rexUserLoginmessage) {
-    $content .= '<div class="rex-js-login-message">'.rex_view::error($rexUserLoginmessage) . '</div>';
+    $content .= '<div class="rex-js-login-message">' . rex_view::error($rexUserLoginmessage) . '</div>';
     $js = '
         var time_el = $(".rex-js-login-message strong[data-time]");
         if(time_el.length == 1) {
@@ -50,7 +46,7 @@ $formElements = [];
 
 $inputGroups = [];
 $n = [];
-$n['field'] = '<input class="form-control" type="text" value="' . rex_escape($rexUserLogin) . '" id="rex-id-login-user" name="rex_user_login" autocomplete="username" autofocus />';
+$n['field'] = '<input class="form-control" type="text" value="' . rex_escape($rexUserLogin) . '" id="rex-id-login-user" name="rex_user_login" autocomplete="username webauthn" inputmode="email" autocorrect="off" autocapitalize="off" autofocus />';
 $n['left'] = '<i class="rex-icon rex-icon-user"></i>';
 $inputGroups[] = $n;
 
@@ -66,7 +62,7 @@ $formElements[] = $n;
 
 $inputGroups = [];
 $n = [];
-$n['field'] = '<input class="form-control" type="password" name="rex_user_psw" id="rex-id-login-password" autocomplete="current-password" />';
+$n['field'] = '<input class="form-control" type="password" name="rex_user_psw" id="rex-id-login-password" autocomplete="current-password" autocorrect="off" autocapitalize="off" />';
 $n['left'] = '<i class="rex-icon rex-icon-password"></i>';
 $inputGroups[] = $n;
 
@@ -112,12 +108,15 @@ $fragment->setVar('body', $content, false);
 $fragment->setVar('buttons', $buttons, false);
 $content = $fragment->parse('core/page/section.php');
 
+$webauthn = new rex_webauthn();
+
 $content = '
-<form id="rex-form-login" action="' . rex_url::backendController() . '" method="post">
+<form id="rex-form-login" action="' . rex_url::backendController() . '" method="post" data-auth-login>
     ' . $content . '
     ' . rex_csrf_token::factory('backend_login')->getHiddenField() . '
+    <input type="hidden" name="rex_user_passkey" data-auth-passkey="' . rex_escape($webauthn->getGetArgs()) . '"/>
 </form>
-<script type="text/javascript">
+<script type="text/javascript" nonce="' . rex_response::getNonce() . '">
      <!--
     jQuery(function($) {
         $("#rex-form-login")

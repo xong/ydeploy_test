@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @package redaxo\be-style
  *
@@ -8,6 +9,7 @@ class rex_be_style
 {
     /**
      * Converts Backend SCSS files to CSS.
+     * @return void
      */
     public static function compile()
     {

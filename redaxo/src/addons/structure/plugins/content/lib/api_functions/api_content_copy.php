@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @package redaxo\structure\content
  */
@@ -15,12 +16,13 @@ class rex_api_content_copy extends rex_api_function
         $clangA = rex_request('clang_a', 'int');
         $clangB = rex_request('clang_b', 'int');
 
-        $user = rex::getUser();
+        $user = rex::requireUser();
 
         // Check permissions
-        if ($user->hasPerm('copyContent[]') &&
-            $user->getComplexPerm('clang')->hasPerm($clangA) &&
-            $user->getComplexPerm('clang')->hasPerm($clangB)
+        if (
+            $user->hasPerm('copyContent[]')
+            && $user->getComplexPerm('clang')->hasPerm($clangA)
+            && $user->getComplexPerm('clang')->hasPerm($clangB)
         ) {
             if (rex_content_service::copyContent($articleId, $articleId, $clangA, $clangB)) {
                 return new rex_api_result(true, rex_i18n::msg('content_contentcopy'));

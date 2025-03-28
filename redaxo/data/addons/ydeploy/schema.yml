@@ -43,7 +43,6 @@ tables:
             - pid
         indexes:
             find_articles: { type: UNIQUE, columns: [id, clang_id] }
-            id: { type: INDEX, columns: [id] }
             clang_id: { type: INDEX, columns: [clang_id] }
             parent_id: { type: INDEX, columns: [parent_id] }
     rex_article_slice:
@@ -126,8 +125,6 @@ tables:
             - id
         indexes:
             slice_priority: { type: INDEX, columns: [article_id, priority, module_id] }
-            clang_id: { type: INDEX, columns: [clang_id] }
-            article_id: { type: INDEX, columns: [article_id] }
             find_slices: { type: INDEX, columns: [clang_id, article_id] }
     rex_clang:
         charset: utf8mb4
@@ -198,7 +195,7 @@ tables:
         collation: utf8mb4_unicode_ci
         columns:
             id: { type: 'int(10) unsigned', nullable: false, default: null, extra: auto_increment }
-            status: { type: 'int(10) unsigned', nullable: false, default: null, extra: null }
+            status: { type: 'tinyint(1) unsigned', nullable: false, default: '0', extra: null }
             name: { type: varchar(255), nullable: false, default: null, extra: null }
             description: { type: varchar(255), nullable: false, default: null, extra: null }
             createdate: { type: datetime, nullable: false, default: null, extra: null }
@@ -314,7 +311,7 @@ tables:
             name: { type: varchar(255), nullable: true, default: null, extra: null }
             description: { type: text, nullable: true, default: null, extra: null }
             login: { type: varchar(50), nullable: false, default: null, extra: null }
-            password: { type: varchar(255), nullable: false, default: null, extra: null }
+            password: { type: varchar(255), nullable: true, default: null, extra: null }
             email: { type: varchar(255), nullable: true, default: null, extra: null }
             status: { type: tinyint(1), nullable: false, default: null, extra: null }
             admin: { type: tinyint(1), nullable: false, default: null, extra: null }
@@ -333,12 +330,25 @@ tables:
             lasttrydate: { type: datetime, nullable: false, default: null, extra: null }
             lastlogin: { type: datetime, nullable: true, default: null, extra: null }
             session_id: { type: varchar(255), nullable: true, default: null, extra: null }
-            cookiekey: { type: varchar(255), nullable: true, default: null, extra: null }
             revision: { type: 'int(10) unsigned', nullable: false, default: null, extra: null }
         primaryKey:
             - id
         indexes:
             login: { type: UNIQUE, columns: [login] }
+    rex_user_passkey:
+        charset: utf8mb4
+        collation: utf8mb4_unicode_ci
+        columns:
+            id: { type: varchar(255), nullable: false, default: null, extra: null }
+            user_id: { type: 'int(10) unsigned', nullable: false, default: null, extra: null }
+            public_key: { type: text, nullable: false, default: null, extra: null }
+            createdate: { type: datetime, nullable: false, default: null, extra: null }
+        primaryKey:
+            - id
+        indexes:
+            rex_user_passkey_user_id: { type: INDEX, columns: [user_id] }
+        foreignKeys:
+            rex_user_passkey_user_id: { table: rex_user, columns: { user_id: id }, onUpdate: CASCADE, onDelete: CASCADE }
     rex_user_role:
         charset: utf8mb4
         collation: utf8mb4_unicode_ci
@@ -354,6 +364,27 @@ tables:
             revision: { type: 'int(10) unsigned', nullable: false, default: null, extra: null }
         primaryKey:
             - id
+    rex_user_session:
+        charset: utf8mb4
+        collation: utf8mb4_unicode_ci
+        columns:
+            session_id: { type: varchar(255), nullable: false, default: null, extra: null }
+            user_id: { type: 'int(10) unsigned', nullable: false, default: null, extra: null }
+            cookie_key: { type: varchar(255), nullable: true, default: null, extra: null }
+            passkey_id: { type: varchar(255), nullable: true, default: null, extra: null }
+            ip: { type: varchar(39), nullable: false, default: null, extra: null }
+            useragent: { type: varchar(255), nullable: false, default: null, extra: null }
+            starttime: { type: datetime, nullable: false, default: null, extra: null }
+            last_activity: { type: datetime, nullable: false, default: null, extra: null }
+        primaryKey:
+            - session_id
+        indexes:
+            cookie_key: { type: UNIQUE, columns: [cookie_key] }
+            rex_user_session_user_id: { type: INDEX, columns: [user_id] }
+            rex_user_session_passkey_id: { type: INDEX, columns: [passkey_id] }
+        foreignKeys:
+            rex_user_session_passkey_id: { table: rex_user_passkey, columns: { passkey_id: id }, onUpdate: CASCADE, onDelete: CASCADE }
+            rex_user_session_user_id: { table: rex_user, columns: { user_id: id }, onUpdate: CASCADE, onDelete: CASCADE }
     rex_ydeploy_migration:
         charset: utf8mb4
         collation: utf8mb4_unicode_ci
@@ -436,7 +467,7 @@ tables:
             description: { type: text, nullable: false, default: null, extra: null }
             list_amount: { type: int(11), nullable: false, default: '50', extra: null }
             list_sortfield: { type: varchar(191), nullable: false, default: id, extra: null }
-            list_sortorder: { type: 'enum(''ASC'',''DESC'')', nullable: false, default: ASC, extra: null }
+            list_sortorder: { type: "enum('ASC','DESC')", nullable: false, default: ASC, extra: null }
             prio: { type: int(11), nullable: false, default: null, extra: null }
             search: { type: tinyint(1), nullable: false, default: null, extra: null }
             hidden: { type: tinyint(1), nullable: false, default: null, extra: null }

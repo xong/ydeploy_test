@@ -12,31 +12,42 @@ abstract class rex_var
     public const ENV_INPUT = 4;
     public const ENV_OUTPUT = 8;
 
+    private const PLACEHOLDER_BRACKET_OPEN = '@@@OPEN_BRACKET@@@';
+    private const PLACEHOLDER_BRACKET_CLOSE = '@@@CLOSE_BRACKET@@@';
+    private const PLACEHOLDER_INLINE_HTML = '@@@INLINE_HTML_REPLACEMENT_END@@@';
+
     /** @var array<string, class-string<self>> */
-    private static $vars = [];
+    private static array $vars = [];
 
-    /** @var null|int */
-    private static $env;
+    private static ?int $env = null;
 
-    /** @var null|string */
+    /** @var string|null */
     private static $context;
 
     /** @var mixed */
     private static $contextData;
 
-    /** @var string[] */
+    /** @var array<string> */
     private $args = [];
 
-    /** @var int */
-    private static $variableIndex = 0;
+    private static int $variableIndex = 0;
+
+    /**
+     * @param string $name Name must start with "REX_"
+     * @param class-string<self> $class
+     */
+    public static function register(string $name, string $class): void
+    {
+        self::$vars[$name] = $class;
+    }
 
     /**
      * Parses all REX_VARs in the given content.
      *
-     * @param string $content     Content
-     * @param int    $env         Environment
-     * @param string $context     Context
-     * @param mixed  $contextData Context data
+     * @param string $content Content
+     * @param int $env Environment
+     * @param string $context Context
+     * @param mixed $contextData Context data
      *
      * @return string
      */
@@ -64,7 +75,7 @@ abstract class rex_var
                 continue;
             }
 
-            if (!in_array($token[0], [T_INLINE_HTML, T_CONSTANT_ENCAPSED_STRING, T_STRING, T_START_HEREDOC])) {
+            if (!in_array($token[0], [T_INLINE_HTML, T_CONSTANT_ENCAPSED_STRING, T_ENCAPSED_AND_WHITESPACE, T_STRING, T_START_HEREDOC])) {
                 $content .= $token[1];
                 continue;
             }
@@ -72,11 +83,11 @@ abstract class rex_var
             $add = $token[1];
             switch ($token[0]) {
                 case T_INLINE_HTML:
-                    $format = '<?= %s@@@INLINE_HTML_REPLACEMENT_END@@@';
+                    $format = '<?= %s' . self::PLACEHOLDER_INLINE_HTML;
                     $add = self::replaceVars($add, $format);
-                    $add = preg_replace_callback('/@@@INLINE_HTML_REPLACEMENT_END@@@(\r?\n?)/', static function (array $match) {
+                    $add = preg_replace_callback('/' . self::PLACEHOLDER_INLINE_HTML . '(\r?\n?)/', static function (array $match) {
                         return $match[1]
-                            ? ', "'.addcslashes($match[1], "\r\n").'" ?>'.$match[1]
+                            ? ', "' . addcslashes($match[1], "\r\n") . '" ?>' . $match[1]
                             : ' ?>';
                     }, $add);
                     break;
@@ -93,6 +104,10 @@ abstract class rex_var
                     if (' . ""' == $end || " . ''" == $end) {
                         $add = substr($add, 0, -5);
                     }
+                    break;
+
+                case T_ENCAPSED_AND_WHITESPACE:
+                    $add = self::replaceVars($add, '" . %s . "', false, '"');
                     break;
 
                 case T_STRING:
@@ -149,7 +164,7 @@ abstract class rex_var
      *
      * @param string $content
      * @param string $format
-     * @param bool   $useVariables
+     * @param bool $useVariables
      * @param string $stripslashes
      *
      * @return string
@@ -162,6 +177,7 @@ abstract class rex_var
             return $content;
         }
 
+        /** @var AppendIterator<int, array<string>, Iterator<int, array<string>>> $iterator */
         $iterator = new AppendIterator();
         $iterator->append(new ArrayIterator($matches));
         $variables = [];
@@ -176,7 +192,7 @@ abstract class rex_var
             $replaced = false;
 
             if (null !== $var) {
-                $args = str_replace(['\[', '\]'], ['@@@OPEN_BRACKET@@@', '@@@CLOSE_BRACKET@@@'], $match[2]);
+                $args = str_replace(['\[', '\]'], [self::PLACEHOLDER_BRACKET_OPEN, self::PLACEHOLDER_BRACKET_CLOSE], $match[2]);
                 if ($stripslashes) {
                     $args = str_replace(['\\' . $stripslashes, '\\' . $stripslashes], $stripslashes, $args);
                 }
@@ -185,9 +201,9 @@ abstract class rex_var
                     $output .= str_repeat("\n", max(0, substr_count($match[0], "\n") - substr_count($output, "\n") - substr_count($format, "\n")));
                     if ($useVariables) {
                         $replace = '$__rex_var_content_' . ++self::$variableIndex;
-                        $variables[] = '/* '. $match[0] .' */ ' . $replace . ' = ' . $output;
+                        $variables[] = '/* ' . $match[0] . ' */ ' . $replace . ' = ' . $output;
                     } else {
-                        $replace = '/* '. $match[0] .' */ '. $output;
+                        $replace = '/* ' . $match[0] . ' */ ' . $output;
                     }
 
                     $replacements[$match[0]] = sprintf($format, $replace);
@@ -216,7 +232,7 @@ abstract class rex_var
      *
      * @param string $content
      *
-     * @return array
+     * @return list<array<array-key, string>>
      */
     private static function getMatches($content)
     {
@@ -228,6 +244,7 @@ abstract class rex_var
      * Sets the arguments.
      *
      * @param string $argString
+     * @return void
      */
     private function setArgs($argString)
     {
@@ -238,7 +255,7 @@ abstract class rex_var
      * Checks whether the given arguments exists.
      *
      * @param string $key
-     * @param bool   $defaultArg
+     * @param bool $defaultArg
      *
      * @return bool
      */
@@ -250,16 +267,11 @@ abstract class rex_var
     /**
      * Returns the argument.
      *
-     * @param string          $key
-     * @param null|string|int $default
-     * @param bool            $defaultArg
-     *
-     * @return null|string|int
-     *
      * @template T as null|string|int
-     * @phpstan-template T
-     * @psalm-param T $default
-     * @psalm-return string|T
+     * @param string $key
+     * @param T $default
+     * @param bool $defaultArg
+     * @return string|T
      */
     protected function getArg($key, $default = null, $defaultArg = false)
     {
@@ -272,16 +284,11 @@ abstract class rex_var
     /**
      * Returns the (recursive) parsed argument.
      *
-     * @param string          $key
-     * @param null|string|int $default
-     * @param bool            $defaultArg
-     *
-     * @return int|null|string
-     *
      * @template T as null|string|int
-     * @phpstan-template T
-     * @psalm-param T $default
-     * @psalm-return string|T
+     * @param string $key
+     * @param T $default
+     * @param bool $defaultArg
+     * @return string|T
      */
     protected function getParsedArg($key, $default = null, $defaultArg = false)
     {
@@ -293,9 +300,9 @@ abstract class rex_var
         $end = '<<</addslashes>>>';
         $arg = $begin . self::replaceVars($arg, $end . "' . %s . '" . $begin) . $end;
         $arg = preg_replace_callback("@$begin(.*)$end@Us", static function ($match) {
-            return addcslashes($match[1], "\'");
+            return addcslashes($match[1], "\\'");
         }, $arg);
-        $arg = str_replace(['@@@OPEN_BRACKET@@@', '@@@CLOSE_BRACKET@@@'], ['[', ']'], $arg);
+        $arg = str_replace([self::PLACEHOLDER_BRACKET_OPEN, self::PLACEHOLDER_BRACKET_CLOSE], ['[', ']'], $arg);
         return is_numeric($arg) ? $arg : "'$arg'";
     }
 

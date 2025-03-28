@@ -5,13 +5,11 @@
  *
  * @author markus.staab[at]redaxo[dot]de Markus Staab
  * @author jan.kristinus[at]redaxo[dot]de Jan Kristinus
- *
- * @package redaxo5
  */
 
 rex_sql_table::get(rex::getTable('media_manager_type'))
     ->ensurePrimaryIdColumn()
-    ->ensureColumn(new rex_sql_column('status', 'int(10) unsigned'))
+    ->ensureColumn(new rex_sql_column('status', 'tinyint(1) unsigned', false, '0'))
     ->ensureColumn(new rex_sql_column('name', 'varchar(255)'))
     ->ensureColumn(new rex_sql_column('description', 'varchar(255)'))
     ->ensureIndex(new rex_sql_index('name', ['name'], rex_sql_index::UNIQUE))

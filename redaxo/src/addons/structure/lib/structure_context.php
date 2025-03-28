@@ -7,10 +7,7 @@
  */
 class rex_structure_context
 {
-    /**
-     * @var array
-     */
-    private $params;
+    private array $params;
 
     public function __construct(array $params)
     {
@@ -30,10 +27,10 @@ class rex_structure_context
         if (!isset($params['clang_id'])) {
             $params['clang_id'] = 0;
         }
-        if (rex_clang::count() > 1 && !rex::getUser()->getComplexPerm('clang')->hasPerm($params['clang_id'])) {
+        if (rex_clang::count() > 1 && !rex::requireUser()->getComplexPerm('clang')->hasPerm($params['clang_id'])) {
             $params['clang_id'] = 0;
             foreach (rex_clang::getAllIds() as $key) {
-                if (rex::getUser()->getComplexPerm('clang')->hasPerm($key)) {
+                if (rex::requireUser()->getComplexPerm('clang')->hasPerm($key)) {
                     $params['clang_id'] = $key;
                     break;
                 }
@@ -87,12 +84,12 @@ class rex_structure_context
 
     public function getMountpoints(): array
     {
-        return rex::getUser()->getComplexPerm('structure')->getMountpoints();
+        return rex::requireUser()->getComplexPerm('structure')->getMountpoints();
     }
 
     public function hasCategoryPermission(): bool
     {
-        return rex::getUser()->getComplexPerm('structure')->hasCategoryPerm($this->getCategoryId());
+        return rex::requireUser()->getComplexPerm('structure')->hasCategoryPerm($this->getCategoryId());
     }
 
     public function getRowsPerPage(): int
@@ -112,7 +109,7 @@ class rex_structure_context
 
     /**
      * @param string $key
-     * @param mixed  $default
+     * @param mixed $default
      *
      * @return mixed
      */

@@ -13,16 +13,11 @@ use splitbrain\PHPArchive\Tar;
  *
  * @package redaxo\backup
  *
- * @see     http://www.mkssoftware.com/docs/man4/tar.4.asp
- *
  * @internal
  */
 class rex_backup_tar
 {
-    /**
-     * @var Tar
-     */
-    private $tar;
+    private Tar $tar;
 
     // constructor to omit warnings
     public function __construct()
@@ -51,6 +46,7 @@ class rex_backup_tar
 
     /**
      * @param string $archivePath
+     * @return void
      */
     public function create($archivePath)
     {

@@ -1,9 +1,5 @@
 <?php
 
-/**
- * @package redaxo5
- */
-
 $OUT = true;
 
 $function = rex_request('function', 'string');
@@ -37,19 +33,16 @@ if (('' != $addAction || 'delete' == $functionAction) && !$csrfToken->isValid())
     $action->setValue('module_id', $moduleId);
     $action->setValue('action_id', $actionId);
 
-    try {
-        $action->insert();
-        $success = rex_i18n::msg('action_taken');
-        $goon = '1';
-    } catch (rex_sql_exception $e) {
-        $error = $action->getError();
-    }
+    $action->insert();
+    $success = rex_i18n::msg('action_taken');
+    $goon = '1';
 } elseif ('delete' == $functionAction) {
     $action = rex_sql::factory();
     $action->setTable(rex::getTablePrefix() . 'module_action');
     $action->setWhere(['id' => $iactionId]);
+    $action->delete();
 
-    if ($action->delete() && $action->getRows() > 0) {
+    if ($action->getRows() > 0) {
         $success = rex_i18n::msg('action_deleted_from_modul');
     } else {
         $error = $action->getError();
@@ -91,14 +84,13 @@ if ('delete' == $function && !$csrfToken->isValid()) {
         }
 
         $error = rex_i18n::msg('module_cannot_be_deleted', $modulname);
-
-        if ('' != $moduleInUseMessage) {
-            $error .= '<ul>' . $moduleInUseMessage . '</ul>';
-        }
+        $error .= '<ul>' . $moduleInUseMessage . '</ul>';
     } else {
+        $del = rex_sql::factory();
         $del->setQuery('DELETE FROM ' . rex::getTablePrefix() . 'module WHERE id=?', [$moduleId]);
 
         if ($del->getRows() > 0) {
+            $del = rex_sql::factory();
             $del->setQuery('DELETE FROM ' . rex::getTablePrefix() . 'module_action WHERE module_id=?', [$moduleId]);
             rex_module_cache::delete($moduleId);
             $success = rex_i18n::msg('module_deleted');
@@ -127,6 +119,7 @@ if ('add' == $function || 'edit' == $function) {
                 $IMOD->setValue('input', $eingabe);
                 $IMOD->setValue('output', $ausgabe);
                 $IMOD->addGlobalCreateFields();
+                $IMOD->addGlobalUpdateFields();
 
                 $IMOD->insert();
                 $moduleId = (int) $IMOD->getLastId();
@@ -235,24 +228,24 @@ if ('add' == $function || 'edit' == $function) {
 
         $n = [];
         $n['label'] = '<label for="mname">' . rex_i18n::msg('module_name') . '</label>';
-        $n['field'] = '<input class="form-control" id="mname" type="text" name="mname" value="' . rex_escape($mname) . '" />';
+        $n['field'] = '<input class="form-control" id="mname" type="text" name="mname" value="' . rex_escape($mname) . '" maxlength="255" />';
         $n['note'] = rex_i18n::msg('translatable');
         $formElements[] = $n;
 
         $n = [];
         $n['label'] = '<label for="mkey">' . rex_i18n::msg('module_key') . '</label>';
-        $n['field'] = '<input class="form-control" id="mkey" type="text" name="mkey" value="' . rex_escape($mkey) . '" />';
+        $n['field'] = '<input class="form-control" id="mkey" type="text" name="mkey" value="' . rex_escape($mkey) . '" maxlength="191" autocorrect="off" autocapitalize="off" spellcheck="false" />';
         $n['note'] = rex_i18n::msg('module_key_notice');
         $formElements[] = $n;
 
         $n = [];
         $n['label'] = '<label for="minput">' . rex_i18n::msg('input') . '</label>';
-        $n['field'] = '<textarea class="form-control rex-code rex-js-code" id="minput" name="eingabe" spellcheck="false">' . rex_escape($eingabe) . '</textarea>';
+        $n['field'] = '<textarea class="form-control rex-code rex-js-code" id="minput" name="eingabe" autocapitalize="off" autocorrect="off" spellcheck="false">' . rex_escape($eingabe) . '</textarea>';
         $formElements[] = $n;
 
         $n = [];
         $n['label'] = '<label for="moutput">' . rex_i18n::msg('output') . '</label>';
-        $n['field'] = '<textarea class="form-control rex-code rex-js-code" id="moutput" name="ausgabe" spellcheck="false">' . rex_escape($ausgabe) . '</textarea>';
+        $n['field'] = '<textarea class="form-control rex-code rex-js-code" id="moutput" name="ausgabe" autocapitalize="off" autocorrect="off" spellcheck="false">' . rex_escape($ausgabe) . '</textarea>';
         $n['note'] = rex_i18n::msg('module_actions_notice');
         $formElements[] = $n;
 
@@ -429,7 +422,7 @@ if ($OUT) {
         return $list->getColumnLink('name', rex_i18n::translate($list->getValue('name')));
     });
 
-    $slices = rex_sql::factory()->getArray('SELECT `module_id` FROM '.rex::getTable('article_slice').' GROUP BY `module_id`');
+    $slices = rex_sql::factory()->getArray('SELECT `module_id` FROM ' . rex::getTable('article_slice') . ' GROUP BY `module_id`');
     if (count($slices) > 0) {
         $usedIds = array_flip(array_map(static function ($slice) {
             return $slice['module_id'];

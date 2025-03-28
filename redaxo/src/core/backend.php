@@ -1,59 +1,58 @@
 <?php
 
-/**
- * @package redaxo5
- */
-
 header('X-Robots-Tag: noindex, nofollow, noarchive');
 header('X-Frame-Options: SAMEORIGIN');
 header("Content-Security-Policy: frame-ancestors 'self'");
-// Opt out of google FLoC
-header('Permissions-Policy: interest-cohort=()');
 
 // assets which are passed with a cachebuster will be cached very long,
 // as we assume their url will change when the underlying content changes
 if (rex_get('asset') && rex_get('buster')) {
     /** @psalm-taint-escape file */ // it is not escaped here, but it is validated below via the realpath
-    $assetFile = rex_get('asset');
+    $assetFile = rex_get('asset', 'string');
 
     // relative to the assets-root
     if (str_starts_with($assetFile, '/assets/')) {
-        $assetFile = '..'. $assetFile;
+        $assetFile = '..' . $assetFile;
     }
 
     $fullPath = realpath($assetFile);
     $assetDir = rex_path::assets();
 
+    if (!$fullPath) {
+        throw new rex_http_exception(new Exception('File "' . $assetFile . '" not found'), rex_response::HTTP_NOT_FOUND);
+    }
     if (!str_starts_with($fullPath, $assetDir)) {
-        throw new Exception('Assets can only be streamed from within the assets folder. "'. $fullPath .'" is not within "'. $assetDir .'"');
+        throw new rex_http_exception(new Exception('Assets can only be streamed from within the assets folder. "' . $fullPath . '" is not within "' . $assetDir . '"'), rex_response::HTTP_NOT_FOUND);
     }
 
     $ext = rex_file::extension($assetFile);
-    if ('js' === $ext) {
-        $js = rex_file::require($assetFile);
+    if (!in_array($ext, ['js', 'css'], true)) {
+        throw new rex_http_exception(new Exception('Only JS and CSS files can be streamed from the assets folder'), rex_response::HTTP_NOT_FOUND);
+    }
 
-        $js = preg_replace('@^//# sourceMappingURL=.*$@m', '', $js);
+    $content = rex_file::get($assetFile);
+    if (null === $content) {
+        throw new rex_http_exception(new Exception('File "' . $assetFile . '" not found'), rex_response::HTTP_NOT_FOUND);
+    }
+
+    if ('js' === $ext) {
+        $js = preg_replace('@^//# sourceMappingURL=.*$@m', '', $content);
 
         rex_response::sendCacheControl('max-age=31536000, immutable');
         rex_response::sendContent($js, 'application/javascript');
-    } elseif ('css' === $ext) {
-        $styles = rex_file::require($assetFile);
-
+    } else {
         // If we are in a directory off the root, add a relative path here back to the root, like "../"
         // get the public path to this file, plus the baseurl
         $relativeroot = '';
         $pubroot = dirname($_SERVER['PHP_SELF']) . '/' . $relativeroot;
 
         $prefix = $pubroot . dirname($assetFile) . '/';
-        $styles = preg_replace('/(url\(["\']?)([^\/"\'])([^\:\)]+["\']?\))/i', '$1' . $prefix .  '$2$3', $styles);
+        $styles = preg_replace('/(url\(["\']?)([^\/"\'])([^\:\)]+["\']?\))/i', '$1' . $prefix . '$2$3', $content);
 
         rex_response::sendCacheControl('max-age=31536000, immutable');
         rex_response::sendContent($styles, 'text/css');
-    } else {
-        rex_response::setStatus(rex_response::HTTP_NOT_FOUND);
-        rex_response::sendContent('file not found');
     }
-    exit();
+    exit;
 }
 
 // ----- verfuegbare seiten
@@ -81,6 +80,7 @@ if (rex::isSetup()) {
     $login = new rex_backend_login();
     rex::setProperty('login', $login);
 
+    $passkey = rex_post('rex_user_passkey', 'string', null);
     $rexUserLogin = rex_post('rex_user_login', 'string');
     $rexUserPsw = rex_post('rex_user_psw', 'string');
     $rexUserStayLoggedIn = rex_post('rex_user_stay_logged_in', 'boolean', false);
@@ -112,12 +112,13 @@ if (rex::isSetup()) {
 
     $rexUserLoginmessage = '';
 
-    if ($rexUserLogin && !rex_csrf_token::factory('backend_login')->isValid()) {
+    if (($rexUserLogin || $passkey) && !rex_csrf_token::factory('backend_login')->isValid()) {
         $loginCheck = rex_i18n::msg('csrf_token_invalid');
     } else {
         // the server side encryption of pw is only required
         // when not already encrypted by client using javascript
         $login->setLogin($rexUserLogin, $rexUserPsw, rex_post('javascript', 'boolean'));
+        $login->setPasskey('' === $passkey ? null : $passkey);
         $login->setStayLoggedIn($rexUserStayLoggedIn);
         $loginCheck = $login->checkLogin();
     }
@@ -157,19 +158,28 @@ if (rex::isSetup()) {
         }
 
         rex::setProperty('user', $user);
+
+        // Safe Mode
+        if (!rex::isLiveMode() && $user->isAdmin() && null !== ($safeMode = rex_get('safemode', 'boolean', null))) {
+            if ($safeMode) {
+                rex_set_session('safemode', true);
+            } else {
+                rex_unset_session('safemode');
+                if (rex::getProperty('safe_mode')) {
+                    $configFile = rex_path::coreData('config.yml');
+                    $config = array_merge(
+                        rex_file::getConfig(rex_path::core('default.config.yml')),
+                        rex_file::getConfig($configFile),
+                    );
+                    $config['safe_mode'] = false;
+                    rex_file::putConfig($configFile, $config);
+                }
+            }
+        }
     }
 
     if ('' === $rexUserLoginmessage && rex_get('rex_logged_out', 'boolean')) {
         $rexUserLoginmessage = rex_i18n::msg('login_logged_out');
-    }
-
-    // Safe Mode
-    if (null !== ($safeMode = rex_get('safemode', 'boolean', null))) {
-        if ($safeMode) {
-            rex_set_session('safemode', true);
-        } else {
-            rex_unset_session('safemode');
-        }
     }
 }
 
@@ -228,6 +238,10 @@ rex_view::setJsProperty('page', $page);
 // ----- EXTENSION POINT
 // page variable validated
 rex_extension::registerPoint(new rex_extension_point('PAGE_CHECKED', $page, ['pages' => $pages], true));
+
+if (in_array($page, ['profile', 'login'], true)) {
+    rex_view::addJsFile(rex_url::coreAssets('webauthn.js'), [rex_view::JS_IMMUTABLE => true]);
+}
 
 if ($page) {
     // trigger api functions after PAGE_CHECKED, if page param is set

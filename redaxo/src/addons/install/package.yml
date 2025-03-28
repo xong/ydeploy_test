@@ -1,11 +1,12 @@
 package: install
-version: '2.10.0'
+version: '2.12.1'
 author: Gregor Harlan
 supportpage: https://github.com/redaxo/redaxo
 
 page:
     title: 'translate:title'
     perm: admin[]
+    live_mode: false
     block: system
     prio: 70
     pjax: true
@@ -21,9 +22,9 @@ page:
 
 requires:
     php:
-        version: '>=7.3'
+        version: '>=8.1'
         extensions: [zlib]
-    redaxo: ^5.13.0
+    redaxo: ^5.16.0
 
 
 console_commands:

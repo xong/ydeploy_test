@@ -1,6 +1,31 @@
 Changelog
 =========
 
+Version 2.11.1 – 04.03.2025
+---------------------------
+
+### Bugfixes
+
+* Bei Cronjob-Klassen mit Namespaces bzw. Großbuchstaben konnten die Params in der Klasse nicht korrekt abgefragt werden (@gharlan)
+
+
+Version 2.10.2 – 24.02.2024
+---------------------------
+
+### Bugfixes
+
+* Cronjob-Typen wurden nicht alphabetisch sortiert in der Auswahl (@dergel)
+* Cronjob-Klassen konnten keine Namespaces enthalten (@dergel)
+
+
+Version 2.10.1 – 09.02.2024
+---------------------------
+
+### Bugfixes
+
+* Bei Aufruf über Console wird `nexttime` nicht mehr beachtet (da überflüssig und problematisch) (@gharlan)
+
+
 Version 2.9.0 – 25.07.2022
 --------------------------
 

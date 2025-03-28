@@ -1,20 +1,16 @@
 <?php
 
-/**
- * @package redaxo5
- */
-
 assert(isset($PERMALL) && is_bool($PERMALL));
 assert(isset($argFields) && is_string($argFields));
 assert(isset($argUrl) && is_array($argUrl));
 
 // defaults for globals passed in from index.php
- if (!isset($success)) {
-     $success = '';
- }
- if (!isset($error)) {
-     $error = '';
- }
+if (!isset($success)) {
+    $success = '';
+}
+if (!isset($error)) {
+    $error = '';
+}
 
 // *************************************** SUBPAGE: KATEGORIEN
 
@@ -24,36 +20,32 @@ $csrf = rex_csrf_token::factory('mediapool_structure');
 if ($PERMALL) {
     $editId = rex_request('edit_id', 'int');
 
-    try {
-        if (in_array($mediaMethod, ['edit_file_cat', 'delete_file_cat', 'add_file_cat'])) {
-            if (!$csrf->isValid()) {
-                $error = rex_i18n::msg('csrf_token_invalid');
-            } else {
-                if ('edit_file_cat' == $mediaMethod) {
-                    $catName = rex_request('cat_name', 'string');
-                    $data = ['name' => $catName];
-                    $success = rex_media_category_service::editCategory($editId, $data);
-                } elseif ('delete_file_cat' == $mediaMethod) {
-                    try {
-                        $success = rex_media_category_service::deleteCategory($editId);
-                    } catch (rex_functional_exception $e) {
-                        $error = $e->getMessage();
-                    }
-                } elseif ('add_file_cat' == $mediaMethod) {
-                    $parent = null;
-                    $parentId = rex_request('cat_id', 'int');
-                    if ($parentId) {
-                        $parent = rex_media_category::get($parentId);
-                    }
-                    $success = rex_media_category_service::addCategory(
-                        rex_request('catname', 'string'),
-                        $parent
-                    );
+    if (in_array($mediaMethod, ['edit_file_cat', 'delete_file_cat', 'add_file_cat'])) {
+        if (!$csrf->isValid()) {
+            $error = rex_i18n::msg('csrf_token_invalid');
+        } else {
+            if ('edit_file_cat' == $mediaMethod) {
+                $catName = rex_request('cat_name', 'string');
+                $data = ['name' => $catName];
+                $success = rex_media_category_service::editCategory($editId, $data);
+            } elseif ('delete_file_cat' == $mediaMethod) {
+                try {
+                    $success = rex_media_category_service::deleteCategory($editId);
+                } catch (rex_functional_exception $e) {
+                    $error = $e->getMessage();
                 }
+            } elseif ('add_file_cat' == $mediaMethod) {
+                $parent = null;
+                $parentId = rex_request('cat_id', 'int');
+                if ($parentId) {
+                    $parent = rex_media_category::get($parentId);
+                }
+                $success = rex_media_category_service::addCategory(
+                    rex_request('catname', 'string'),
+                    $parent,
+                );
             }
         }
-    } catch (rex_sql_exception $e) {
-        $error = $e->getMessage();
     }
 
     $link = rex_url::currentBackendPage(array_merge($argUrl, ['cat_id' => '']));
@@ -155,7 +147,7 @@ if ($PERMALL) {
                     <td class="rex-table-id" data-title="' . rex_i18n::msg('id') . '">' . $iid . '</td>
                     <td data-title="' . rex_i18n::msg('pool_kat_name') . '"><a class="rex-link-expanded" href="' . $link . $iid . '">' . rex_escape($OOCat->getName()) . '</a></td>
                     <td class="rex-table-action"><a class="rex-link-expanded" href="' . $link . $catId . '&amp;media_method=update_file_cat&amp;edit_id=' . $iid . '"><i class="rex-icon rex-icon-edit"></i> ' . rex_i18n::msg('pool_kat_edit') . '</a></td>
-                    <td class="rex-table-action"><a class="rex-link-expanded" href="' . $link . $catId . '&amp;media_method=delete_file_cat&amp;edit_id=' . $iid . '&amp;'.http_build_query($csrf->getUrlParams()).'" data-confirm="' . rex_i18n::msg('delete') . ' ?"><i class="rex-icon rex-icon-delete"></i> ' . rex_i18n::msg('pool_kat_delete') . '</a></td>
+                    <td class="rex-table-action"><a class="rex-link-expanded" href="' . $link . $catId . '&amp;media_method=delete_file_cat&amp;edit_id=' . $iid . '&amp;' . http_build_query($csrf->getUrlParams()) . '" data-confirm="' . rex_i18n::msg('delete') . ' ?"><i class="rex-icon rex-icon-delete"></i> ' . rex_i18n::msg('pool_kat_delete') . '</a></td>
                 </tr>';
         }
     }

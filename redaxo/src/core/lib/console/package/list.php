@@ -11,7 +11,7 @@ use Symfony\Component\Console\Output\OutputInterface;
  */
 class rex_command_package_list extends rex_console_command
 {
-    protected function configure()
+    protected function configure(): void
     {
         $this
             ->setDescription('List available packages')
@@ -21,10 +21,10 @@ class rex_command_package_list extends rex_console_command
             ->addOption('activated-only', 'a', InputOption::VALUE_NONE, 'only list active packages')
             ->addOption('error-when-empty', null, InputOption::VALUE_NONE, 'if no package matches your filter the command exits with error-code 1, otherwise with 0')
             ->addOption('json', null, InputOption::VALUE_NONE, 'output table as json')
-            ;
+        ;
     }
 
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = $this->getStyle($input, $output);
 
@@ -50,6 +50,7 @@ class rex_command_package_list extends rex_console_command
                 'version' => $package->getVersion(),
                 'installed' => $package->isInstalled(),
                 'activated' => $package->isAvailable(),
+                'license' => $package->getLicense(),
             ];
 
             if (!$jsonOutput) {
@@ -81,7 +82,7 @@ class rex_command_package_list extends rex_console_command
             return $usingExitCode ? (int) (0 === count($rows)) : 0;
         }
 
-        $io->table(['package-id', 'author', 'version', 'installed', 'activated'], $rows);
+        $io->table(['package-id', 'author', 'version', 'installed', 'activated', 'license'], $rows);
         return $usingExitCode ? (int) (0 === count($rows)) : 0;
     }
 }

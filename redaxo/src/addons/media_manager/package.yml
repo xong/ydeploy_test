@@ -1,11 +1,12 @@
 package: media_manager
-version: '2.13.0'
+version: '2.17.1'
 author: 'Markus Staab, Jan Kristinus'
 supportpage: https://github.com/redaxo/redaxo
 
 page:
     title: 'Media Manager'
     perm: admin
+    live_mode: false
     pjax: true
     icon: rex-icon rex-icon-media
     subpages:
@@ -16,12 +17,14 @@ page:
 
 requires:
     php:
-        version: '>=7.3'
+        version: '>=8.1'
         extensions: [gd]
-    redaxo: ^5.10.0
+    redaxo: ^5.17.0
 
 default_config:
     jpg_quality: 80
     png_compression: 5
     webp_quality: 85
+    avif_quality: 60
+    avif_speed: 6
     interlace: [jpg]

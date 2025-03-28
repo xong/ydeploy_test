@@ -18,8 +18,9 @@ class rex_effect_crop extends rex_effect_abstract
         $w = (int) $this->media->getWidth();
         $h = (int) $this->media->getHeight();
 
-        if (empty($this->params['width']) || $this->params['width'] < 0 ||
-            empty($this->params['height']) || $this->params['height'] < 0
+        if (
+            empty($this->params['width']) || $this->params['width'] < 0
+            || empty($this->params['height']) || $this->params['height'] < 0
         ) {
             return;
         }
@@ -46,7 +47,7 @@ class rex_effect_crop extends rex_effect_abstract
                 $offsetHeight += $this->params['offset_height'];
                 break;
             case 'bottom':
-                $offsetHeight = (int) (($h - $cropH)) + $this->params['offset_height'];
+                $offsetHeight = (int) ($h - $cropH) + $this->params['offset_height'];
                 break;
             case 'middle':
             default: // center
@@ -67,18 +68,11 @@ class rex_effect_crop extends rex_effect_abstract
                 break;
         }
 
-        // create cropped image
-        if (function_exists('ImageCreateTrueColor')) {
-            $des = @imagecreatetruecolor($cropW, $cropH);
-        } else {
-            $des = @imagecreate($cropW, $cropH);
-        }
-
+        $des = @imagecreatetruecolor($cropW, $cropH);
         if (!$des) {
             return;
         }
 
-        // Transparenz erhalten
         $this->keepTransparent($des);
         imagecopyresampled($des, $gdimage, 0, 0, $offsetWidth, $offsetHeight, $cropW, $cropH, $cropW, $cropH);
 

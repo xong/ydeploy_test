@@ -1,6 +1,69 @@
 Changelog
 =========
 
+Version 3.5.1 – 10.02.2025
+--------------------------
+
+* Update Font Awesome auf 6.7.2 (@alxndr-w)
+
+
+Version 3.5.0 – 22.10.2024
+--------------------------
+
+* Login-Seite: Neues Hintergrundbild (@dergel)
+* Update Font Awesome auf 6.5.2 (@madiko)
+* Neues Icon für Cronjob-Menüpunkt (@alxndr-w)
+
+
+Version 3.4.1 – 07.04.2024
+--------------------------
+
+* Alte Login-Hintergründe wurden beim Update nicht aus dem Root-Assets-Ordner entfernt (@gharlan)
+
+
+Version 3.4.0 – 12.03.2024
+--------------------------
+
+* Login-Seite: Neues Hintergrundbild (@gharlan)
+
+
+Version 3.3.1 – 24.02.2024
+--------------------------
+
+* Customizer: Beim Header-Link zum Frontend wurde das Icon teilweise nicht angezeigt (@danspringer)
+
+
+Version 3.3.0 – 09.02.2024
+--------------------------
+
+* Font Awesome: Major-Update auf v6.5.1 (FA4-icons deprecated; Changelog FA: https://fontawesome.com/docs/changelog/) (@madiko, @tbaddade)
+* Login-Seite: Neues Hintergrundbild (@tbaddade, @gharlan)
+
+
+Version 3.2.0 – 28.02.2023
+--------------------------
+
+* Login-Seite: Neues Hintergrundbild (@schuer)
+* Markierungsfarbe in AddOn-Tabelle nach Installer-Download optimiert (@pwechs)
+* CodeMirror: LineWrapping per Default deaktiviert (@aeberhard)
+* Customizer: Frontend-Link anhand tatsächlicher Domain, nicht über `rex::getServer()` (@christophboecker)
+
+
+Version 3.1.2 – 20.02.2023
+--------------------------
+
+* Dropdowns wurden teils von der Headerleiste überdeckt (@TobiasKrais)
+* Darstellung HTML5-Datefelder korrigiert (@tbaddade)
+* customizer: Fehlende Config-Werte werden besser abgefangen (@gharlan)
+
+
+Version 3.1.1 – 13.12.2022
+--------------------------
+
+* Suchfeld: Bei eigener Nutzung war je nach Wrapper teils der Clear-Button nicht sichtbar (@eaCe)
+* scss-compiler: Bei Exceptions kam trotzdem Exit-Code 0 (@staabm)
+
+
 Version 3.1.0 – 25.07.2022
 --------------------------
 

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @var rex_fragment $this
  * @psalm-scope-this rex_fragment
@@ -35,4 +36,4 @@ if (count($items) > 0) {
     }
 }
 
-echo '<div' . ((isset($this->id) && '' != $this->id) ? ' id="' .  $this->id . '"' : '') . ' class="rex-breadcrumb"><ol class="breadcrumb">' . implode('', $listItems) . '</ol></div>';
+echo '<div' . ((isset($this->id) && '' != $this->id) ? ' id="' . $this->id . '"' : '') . ' class="rex-breadcrumb"><ol class="breadcrumb">' . implode('', $listItems) . '</ol></div>';

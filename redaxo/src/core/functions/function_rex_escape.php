@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Escapes a variable to be used while rendering html.
  *
@@ -8,7 +9,8 @@
  *
  * @package redaxo\core
  *
- * @param mixed  $value    The value to escape
+ * @template T
+ * @param T $value The value to escape
  * @param string $strategy Supported strategies:
  *                         "html": escapes a string for the HTML context.
  *                         "html_simplified": escapes a string for the HTML context. Allows some basic tags which are safe regarding XSS.
@@ -16,19 +18,16 @@
  *                         "js": escapes a string for the JavaScript/JSON context.
  *                         "css": escapes a string for the CSS context. CSS escaping can be applied to any string being inserted into CSS and escapes everything except alphanumerics.
  *                         "url": escapes a string for the URI or parameter contexts. This should not be used to escape an entire URI; only a subcomponent being inserted.
- *
- * @psalm-template T
- * @psalm-param T $value
- * @psalm-return (T is Stringable ? string : T)
+ * @psalm-param 'html'|'html_simplified'|'html_attr'|'js'|'css'|'url' $strategy
  *
  * @throws InvalidArgumentException
  *
- * @psalm-param 'html'|'html_simplified'|'html_attr'|'js'|'css'|'url' $strategy
- *
  * @return mixed
+ * @psalm-return (T is Stringable ? string : T)
  *
  * @psalm-taint-escape has_quotes
  * @psalm-taint-escape html
+ * @psalm-pure
  */
 function rex_escape($value, $strategy = 'html')
 {
@@ -42,11 +41,12 @@ function rex_escape($value, $strategy = 'html')
         }
 
         if ($value instanceof stdClass) {
+            $clone = clone $value;
             foreach (get_object_vars($value) as $k => $v) {
-                $value->$k = rex_escape($v, $strategy);
+                $clone->$k = rex_escape($v, $strategy);
             }
 
-            return $value;
+            return $clone;
         }
 
         if (is_object($value) && method_exists($value, '__toString')) {
@@ -82,10 +82,11 @@ function rex_escape($value, $strategy = 'html')
             $string = preg_replace_callback('#[^a-zA-Z0-9,\._]#Su', static function ($matches) {
                 $char = $matches[0];
 
-                /*
+                /**
                  * A few characters have short escape sequences in JSON and JavaScript.
                  * Escape sequences supported only by JavaScript, not JSON, are omitted.
                  * \" is also supported but omitted, because the resulting string is not HTML safe.
+                 * @var array<string, string>
                  */
                 static $shortMap = [
                     '\\' => '\\\\',
@@ -102,15 +103,15 @@ function rex_escape($value, $strategy = 'html')
                 }
 
                 $codepoint = mb_ord($char, 'UTF-8');
-                if (0x10000 > $codepoint) {
+                if (0x1_00_00 > $codepoint) {
                     return sprintf('\u%04X', $codepoint);
                 }
 
                 // Split characters outside the BMP into surrogate pairs
                 // https://tools.ietf.org/html/rfc2781.html#section-2.1
-                $u = $codepoint - 0x10000;
-                $high = 0xD800 | ($u >> 10);
-                $low = 0xDC00 | ($u & 0x3FF);
+                $u = $codepoint - 0x1_00_00;
+                $high = 0xD8_00 | ($u >> 10);
+                $low = 0xDC_00 | ($u & 0x3_FF);
 
                 return sprintf('\u%04X\u%04X', $high, $low);
             }, $string);
@@ -158,11 +159,12 @@ function rex_escape($value, $strategy = 'html')
                  * replace it with while grabbing the hex value of the character.
                  */
                 if (1 === strlen($chr)) {
-                    /*
+                    /**
                      * While HTML supports far more named entities, the lowest common denominator
                      * has become HTML5's XML Serialisation which is restricted to the those named
                      * entities that XML supports. Using HTML entities would result in this error:
-                     *     XML Parsing Error: undefined entity
+                     *     XML Parsing Error: undefined entity.
+                     * @var array<int, string>
                      */
                     static $entityMap = [
                         34 => '&quot;', /* quotation mark */
@@ -171,11 +173,7 @@ function rex_escape($value, $strategy = 'html')
                         62 => '&gt;',   /* greater-than sign */
                     ];
 
-                    if (isset($entityMap[$ord])) {
-                        return $entityMap[$ord];
-                    }
-
-                    return sprintf('&#x%02X;', $ord);
+                    return $entityMap[$ord] ?? sprintf('&#x%02X;', $ord);
                 }
 
                 /*

@@ -14,7 +14,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
  */
 class rex_command_cronjob_run extends rex_console_command
 {
-    protected function configure()
+    protected function configure(): void
     {
         $this
             ->setDescription('Executes cronjobs of the "script" environment')
@@ -22,7 +22,7 @@ class rex_command_cronjob_run extends rex_console_command
         ;
     }
 
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = $this->getStyle($input, $output);
 
@@ -35,36 +35,32 @@ class rex_command_cronjob_run extends rex_console_command
             return $this->executeSingleJob($io, $job);
         }
 
-        $nexttime = rex_package::get('cronjob')->getConfig('nexttime', 0);
+        $manager = rex_cronjob_manager_sql::factory();
 
-        if (0 != $nexttime && time() >= $nexttime) {
-            $manager = rex_cronjob_manager_sql::factory();
-
-            $errors = 0;
-            $manager->check(static function (string $name, bool $success, string $message) use ($io, &$errors) {
-                /** @var int $errors */
-                if ($success) {
-                    $io->success($name.': '.$message);
-                } else {
-                    $io->error($name.': '.$message);
-                    ++$errors;
-                }
-            });
-
-            if ($errors) {
-                /** @var int $errors */
-                $io->error('Cronjobs checked, '.$errors.' failed.');
-                return 1;
+        $errors = 0;
+        $manager->check(static function (string $name, bool $success, string $message) use ($io, &$errors) {
+            /** @var int $errors */
+            if ($success) {
+                $io->success($name . ': ' . $message);
+            } else {
+                $io->error($name . ': ' . $message);
+                ++$errors;
             }
+        });
 
-            $io->success('Cronjobs checked.');
-            return 0;
+        /** @var int $errors */
+        if ($errors) {
+            $io->error('Cronjobs checked, ' . $errors . ' failed.');
+            return 1;
         }
 
-        $io->success('Cronjobs skipped.');
+        $io->success('Cronjobs checked.');
         return 0;
     }
 
+    /**
+     * @return int
+     */
     private function executeSingleJob(SymfonyStyle $io, $id)
     {
         $manager = rex_cronjob_manager_sql::factory();
@@ -99,7 +95,7 @@ class rex_command_cronjob_run extends rex_console_command
 
         $msg = '';
         if ($manager->hasMessage()) {
-            $msg = ': '.$manager->getMessage();
+            $msg = ': ' . $manager->getMessage();
         }
 
         if ($success) {

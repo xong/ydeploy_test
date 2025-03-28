@@ -1,6 +1,97 @@
 Changelog
 =========
 
+Version 2.17.4 – 04.03.2025
+---------------------------
+
+### Bugfixes
+
+* Wenn eine neue Sprache mit Prio=1 angelegt wird, wurden die Kategorien/Artikel nicht in die neue Sprache dupliziert (@gharlan)
+* Beim Löschen von Sprachen aus dem Frontend heraus wurde die Artikel-Slice-Tabelle nicht aufgeräumt (@marcohanke)
+* History-Plugin: Es wurden nur Snapshots erstellt, wenn Benutzer mit Rollback-Recht die Artikel bearbeitet haben, und nur im Backend (@marcohanke)
+* Article/Category-Service: Es wurde nicht abgefangen, wenn die Zielkategorie nicht existiert (@dergel, @gharlan)
+
+
+Version 2.17.3 – 10.02.2025
+---------------------------
+
+### Security
+
+* Content-Page: Der Artikelname wurde in in der Überschrift nicht escaped (Stored XSS; gemeldet von @geo-chen) (@gharlan)
+
+
+Version 2.17.2 – 22.10.2024
+---------------------------
+
+### Bugfixes
+
+* `rex_article_not_found_exception`: Die aktuelle Artikel-ID wurde nicht auf den Fehlerartikel umgeschwenkt (@tyrant88)
+* Artikelbearbeitung: Fehler vermeiden bei Benutzern mit limitierten Rechten (@gharlan)
+
+
+Version 2.17.1 – 07.04.2024
+---------------------------
+
+### Bugfixes
+
+* Modulverwaltung: "Eingabe"-Feld wurde ohne Codemirror angezeigt (@skerbis)
+
+
+Version 2.17.0 – 12.03.2024
+---------------------------
+
+### Bugfixes
+
+* Der Templatename wurde in der Struktur ohne Escaping ausgegeben (@gharlan)
+* Create/Update-Felder (Datum/Benutzer) wurden teils nicht korrekt gesetzt (@gharlan)
+* `rex_module::forKey`: Im Objekt war der Key anschließend nicht gesetzt (@gharlan)
+
+
+Version 2.16.0 – 09.02.2024
+---------------------------
+
+### Neu
+
+* Neuer EP `PAGE_STRUCTURE_ARTICLE_ORDER_BY` um die Artikelsortierung zu ändern (@ynamite)
+* Neuer EP `SLICE_BE_PREVIEW` um die Slice-Vorschau im Backend ändern zu können (@michael-kreatif)
+
+### Bugfixes
+
+* Bei Kategorie-Statuswechsel wurde Createdate statt Updatedate gesetzt (@tbaddade)
+* Kategorie-Löschen funktionierte nicht, wenn es keine Clang mit ID 1 gibt (@alxndr-w)
+* Slice löschen: Bei anschließendem Reload Whoops vermeiden (@gharlan)
+* `rex_template::forKey()` korrigiert (@dgrothaus-mc)
+
+
+Version 2.15.0 – 28.02.2023
+---------------------------
+
+### Neu
+
+* Struktur: Template-Spalte optimiert (@pwechs)
+* Artikel-Editieransicht: Artikel-Status kann in der Metadaten-Box rechts geändert werden (@pwechs)
+* Templates: Bei Inaktiv-Setzung Prüfung, ob Template noch aktiv genutzt wird (@pwechs, @gharlan)
+* `rex_template`: Neue Methode `exists` (@staabm)
+* Datenbank: Überflüssige Indexe entfernt (@gharlan)
+
+
+Version 2.14.3 – 20.02.2023
+---------------------------
+
+### Bugfixes
+
+* Template-Liste: Templatename wurde nicht übersetzt bei Nutzung des `translate:`-Präfixes (@gharlan)
+* Linklist-Vars: Deprecated-Meldung entfernt (@gharlan)
+
+
+Version 2.14.2 – 13.12.2022
+---------------------------
+
+### Bugfixes
+
+* version-Plugin: Über EP `ART_CONTENT_UPDATED` kann nun bei `work_to_live`-Action gesteuert werden, in welcher Version man nach der Aktion im Backend landet (@gharlan)
+
+
 Version 2.14.1 – 02.08.2022
 ---------------------------
 

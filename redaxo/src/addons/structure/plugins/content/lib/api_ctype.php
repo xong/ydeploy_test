@@ -5,20 +5,13 @@
  */
 final class rex_ctype
 {
-    /** @var positive-int */
-    private $id;
-
-    /** @var string */
-    private $name;
-
     /**
      * @param positive-int $id
      */
-    private function __construct(int $id, string $name)
-    {
-        $this->id = $id;
-        $this->name = $name;
-    }
+    private function __construct(
+        private int $id,
+        private string $name,
+    ) {}
 
     /**
      * @return positive-int
@@ -39,7 +32,7 @@ final class rex_ctype
     public static function forTemplate(int $templateId): array
     {
         $sql = rex_sql::factory();
-        $sql->setQuery('SELECT attributes FROM '. rex::getTable('template') .' WHERE id = ?', [$templateId]);
+        $sql->setQuery('SELECT attributes FROM ' . rex::getTable('template') . ' WHERE id = ?', [$templateId]);
         $attributes = $sql->getArrayValue('attributes');
 
         /** @var array<positive-int, string> $ctypesData */
