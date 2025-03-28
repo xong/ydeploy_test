@@ -15,4 +15,5 @@ host('staging')
     ->hostname('maumha.de')
     ->set('deploy_path', '/kunden/536664_06108/webseiten/ydeploy-test.maumha.de')
     ->set('http_user', 'ssh-536664-xong')
+    ->set('bin/php', '/usr/bin/php82')
 ;
